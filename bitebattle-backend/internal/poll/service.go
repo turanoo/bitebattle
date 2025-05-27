@@ -15,6 +15,7 @@ func NewService(db *sql.DB) *Service {
 	return &Service{DB: db}
 }
 
+// Create a new poll for a group by a user
 func (s *Service) CreatePoll(groupID, createdBy uuid.UUID) (*Poll, error) {
 	id := uuid.New()
 	now := time.Now()
@@ -37,6 +38,7 @@ func (s *Service) CreatePoll(groupID, createdBy uuid.UUID) (*Poll, error) {
 	}, nil
 }
 
+// Add a restaurant option to the poll
 func (s *Service) AddOption(pollID uuid.UUID, restaurantID, name, imageURL, menuURL string) (*PollOption, error) {
 	id := uuid.New()
 
@@ -44,6 +46,7 @@ func (s *Service) AddOption(pollID uuid.UUID, restaurantID, name, imageURL, menu
 		INSERT INTO poll_options (id, poll_id, restaurant_id, name, image_url, menu_url)
 		VALUES ($1, $2, $3, $4, $5, $6)
 	`, id, pollID, restaurantID, name, imageURL, menuURL)
+
 	if err != nil {
 		return nil, err
 	}
@@ -58,6 +61,7 @@ func (s *Service) AddOption(pollID uuid.UUID, restaurantID, name, imageURL, menu
 	}, nil
 }
 
+// Cast a vote for a given option by a user
 func (s *Service) CastVote(pollID, optionID, userID uuid.UUID) (*PollVote, error) {
 	id := uuid.New()
 
@@ -78,6 +82,7 @@ func (s *Service) CastVote(pollID, optionID, userID uuid.UUID) (*PollVote, error
 	}, nil
 }
 
+// Retrieve voting results for a poll
 func (s *Service) GetResults(pollID uuid.UUID) ([]PollResult, error) {
 	rows, err := s.DB.Query(`
 		SELECT o.id, o.name, COUNT(v.id) as votes

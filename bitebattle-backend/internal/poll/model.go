@@ -24,10 +24,12 @@ type PollOption struct {
 }
 
 type PollVote struct {
-	ID       uuid.UUID
-	PollID   uuid.UUID
-	OptionID uuid.UUID
-	UserID   uuid.UUID
+	ID                uuid.UUID
+	PollID            uuid.UUID
+	OptionID          uuid.UUID
+	UserID            uuid.UUID
+	RestaurantPlaceID string    `json:"restaurant_place_id"`
+	CreatedAt         time.Time `json:"created_at"`
 }
 
 type PollResult struct {

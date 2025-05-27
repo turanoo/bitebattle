@@ -7,6 +7,7 @@ import (
 	"github.com/turanoo/bitebattle/bitebattle-backend/internal/auth"
 	"github.com/turanoo/bitebattle/bitebattle-backend/internal/group"
 	"github.com/turanoo/bitebattle/bitebattle-backend/internal/poll"
+	"github.com/turanoo/bitebattle/bitebattle-backend/internal/restaurant"
 	"github.com/turanoo/bitebattle/bitebattle-backend/internal/user"
 )
 
@@ -31,5 +32,10 @@ func SetupRoutes(router *gin.Engine, db *sql.DB) {
 	pollService := poll.NewService(db)
 	pollHandler := poll.NewHandler(pollService)
 	pollHandler.RegisterRoutes(api)
+
+	// Restaurant routes
+	restaurantService := restaurant.NewService()
+	restaurantHandler := restaurant.NewHandler(restaurantService)
+	restaurantHandler.RegisterRoutes(api)
 
 }
