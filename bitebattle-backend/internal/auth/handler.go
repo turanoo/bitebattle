@@ -37,6 +37,7 @@ func (h *Handler) RegisterHandler(c *gin.Context) {
 	user := &user.User{
 		Email:        req.Email,
 		PasswordHash: string(hashedPassword),
+		Name:         req.Name,
 	}
 
 	ctx := c.Request.Context()

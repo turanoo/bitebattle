@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/gin-gonic/gin"
+	"github.com/turanoo/bitebattle/bitebattle-backend/internal/account"
 	"github.com/turanoo/bitebattle/bitebattle-backend/internal/auth"
 	"github.com/turanoo/bitebattle/bitebattle-backend/internal/group"
 	"github.com/turanoo/bitebattle/bitebattle-backend/internal/poll"
@@ -37,5 +38,10 @@ func SetupRoutes(router *gin.Engine, db *sql.DB) {
 	restaurantService := restaurant.NewService()
 	restaurantHandler := restaurant.NewHandler(restaurantService)
 	restaurantHandler.RegisterRoutes(api)
+
+	// Account routes
+	accountService := account.NewService(db)
+	accountHandler := account.NewHandler(accountService)
+	accountHandler.RegisterRoutes(api)
 
 }

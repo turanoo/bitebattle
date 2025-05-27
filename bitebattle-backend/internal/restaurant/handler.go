@@ -28,7 +28,7 @@ func (h *Handler) SearchRestaurants(c *gin.Context) {
 
 	location := c.DefaultQuery("location", "37.7749,-122.4194") // Default: SF
 
-	places, err := h.Service.SearchRestaurants(query, location)
+	places, err := h.Service.SearchRestaurants(query, location, "10000")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch restaurants"})
 		return

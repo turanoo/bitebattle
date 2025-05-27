@@ -6,6 +6,6 @@ func NewService() *Service {
 	return &Service{}
 }
 
-func (s *Service) SearchRestaurants(query string, location string) ([]Place, error) {
-	return fetchFromGooglePlaces(query, location)
+func (s *Service) SearchRestaurants(query, location, radius string) ([]Place, error) {
+	return fetchFromGooglePlaces(query, location, radius)
 }

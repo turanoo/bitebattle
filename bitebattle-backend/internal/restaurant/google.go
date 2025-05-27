@@ -13,7 +13,7 @@ type googlePlacesResponse struct {
 	Status  string  `json:"status"`
 }
 
-func fetchFromGooglePlaces(query string, location string) ([]Place, error) {
+func fetchFromGooglePlaces(query string, location string, radius string) ([]Place, error) {
 	apiKey := os.Getenv("GOOGLE_PLACES_API_KEY")
 	if apiKey == "" {
 		return nil, fmt.Errorf("Google Places API key not set")
@@ -24,7 +24,7 @@ func fetchFromGooglePlaces(query string, location string) ([]Place, error) {
 	params.Add("query", query)
 	params.Add("location", location) // format: "lat,lng"
 	params.Add("type", "restaurant")
-	params.Add("radius", "10000") // in meters
+	params.Add("radius", radius) // in meters
 	params.Add("key", apiKey)
 
 	fullURL := fmt.Sprintf("%s?%s", endpoint, params.Encode())
