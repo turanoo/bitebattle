@@ -40,6 +40,9 @@ dev: up migrate run
 stop:
 	$(COMPOSE) down
 
+destroy:
+	$(COMPOSE) down -v
+
 .PHONY: build
 build:
 	go build -o bin/server cmd/server/main.go

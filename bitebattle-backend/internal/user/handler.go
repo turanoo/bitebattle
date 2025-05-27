@@ -27,7 +27,7 @@ func (h *Handler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	if err := h.Service.CreateUser(c.Request.Context(), &u); err != nil {
+	if _, err := h.Service.CreateUser(c.Request.Context(), &u); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
 	}

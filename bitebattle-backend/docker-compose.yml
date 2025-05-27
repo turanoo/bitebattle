@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15
@@ -7,8 +5,8 @@ services:
     restart: always
     environment:
       POSTGRES_DB: bitebattle_dev
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: yourpassword
+      POSTGRES_USER: turan1393
+      POSTGRES_PASSWORD: securePassword123
     ports:
       - "5432:5432"
     volumes:
