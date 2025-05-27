@@ -3,10 +3,10 @@ version: '3.8'
 services:
   db:
     image: postgres:15
-    container_name: biteboard-db
+    container_name: bitebattle-db
     restart: always
     environment:
-      POSTGRES_DB: biteboard_dev
+      POSTGRES_DB: bitebattle_dev
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: yourpassword
     ports:

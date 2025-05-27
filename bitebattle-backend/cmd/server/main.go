@@ -7,8 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
-	"github.com/turanoo/biteboard/biteboard-backend/api"
-	"github.com/turanoo/biteboard/biteboard-backend/pkg/db"
+	"github.com/turanoo/bitebattle/bitebattle-backend/api"
+	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/db"
 )
 
 func main() {

@@ -1,7 +1,7 @@
 # Set environment variables
 ENV_FILE = .env
 COMPOSE = docker-compose
-DB_CONTAINER = biteboard-db
+DB_CONTAINER = bitebattle-db
 
 # Migration tool binary (assuming you're using golang-migrate)
 MIGRATE = migrate

@@ -4,7 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/gin-gonic/gin"
-	"github.com/turanoo/biteboard/biteboard-backend/internal/user"
+	"github.com/turanoo/bitebattle/bitebattle-backend/internal/user"
 )
 
 func SetupRoutes(router *gin.Engine, db *sql.DB) {

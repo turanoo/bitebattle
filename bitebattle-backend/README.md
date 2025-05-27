@@ -1,6 +1,6 @@
-# Biteboard Backend
+# bitebattle Backend
 
-Biteboard Backend is a Go-based backend application designed to handle various functionalities related to the Biteboard project. This document provides an overview of the project, setup instructions, and usage guidelines.
+bitebattle Backend is a Go-based backend application designed to handle various functionalities related to the bitebattle project. This document provides an overview of the project, setup instructions, and usage guidelines.
 
 ## Table of Contents
 
@@ -12,16 +12,16 @@ Biteboard Backend is a Go-based backend application designed to handle various f
 
 ## Installation
 
-To get started with the Biteboard Backend, follow these steps:
+To get started with the bitebattle Backend, follow these steps:
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/biteboard-backend.git
+   git clone https://github.com/yourusername/bitebattle-backend.git
    ```
 
 2. Navigate to the project directory:
    ```
-   cd biteboard-backend
+   cd bitebattle-backend
    ```
 
 3. Install the dependencies:
@@ -41,7 +41,7 @@ The server will start and listen on the specified port. You can then access the 
 ## Project Structure
 
 ```
-biteboard-backend
+bitebattle-backend
 ├── cmd
 │   └── main.go          # Entry point of the application
 ├── internal

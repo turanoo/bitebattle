@@ -1,4 +1,4 @@
-module github.com/turanoo/biteboard/biteboard-backend
+module github.com/turanoo/bitebattle/bitebattle-backend
 
 go 1.24
 
