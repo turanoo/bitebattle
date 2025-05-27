@@ -16,7 +16,6 @@ func main() {
 		log.Println("No .env file found, using system env variables")
 	}
 
-	// Connect to DB
 	if err := db.Init(); err != nil {
 		log.Fatalf("Failed to connect to DB: %v", err)
 	}
@@ -25,7 +24,6 @@ func main() {
 
 	router := gin.Default()
 
-	// Plug in routes
 	api.SetupRoutes(router, database)
 
 	port := os.Getenv("PORT")

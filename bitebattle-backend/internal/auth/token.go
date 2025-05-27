@@ -15,7 +15,6 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-// GenerateToken creates a new JWT token for a user
 func GenerateToken(userID string) (string, error) {
 	expiration := time.Now().Add(72 * time.Hour)
 
@@ -31,7 +30,6 @@ func GenerateToken(userID string) (string, error) {
 	return token.SignedString(jwtKey)
 }
 
-// ValidateToken parses and validates a JWT token
 func ValidateToken(tokenStr string) (*Claims, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {

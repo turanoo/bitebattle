@@ -9,7 +9,6 @@ import (
 
 const userIDContextKey = "userID"
 
-// AuthMiddleware protects routes by validating JWT tokens
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
@@ -31,14 +30,12 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// Add user ID to context
 		c.Set(userIDContextKey, claims.UserID)
 
 		c.Next()
 	}
 }
 
-// GetUserIDFromContext retrieves the userID from Gin context
 func GetUserIDFromContext(c *gin.Context) (string, bool) {
 	userID, exists := c.Get(userIDContextKey)
 	if !exists {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/turanoo/bitebattle/bitebattle-backend/internal/auth"
 )
 
 type Handler struct {
@@ -16,26 +17,32 @@ func NewHandler(service *Service) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
-	users := rg.Group("/groups")
-	users.POST("/", h.CreateGroupHandler)
-	users.POST("/join", h.JoinGroupHandler)
-	users.GET("/:id", h.GetGroupByIDHandler)
+	protected := rg.Group("/groups")
+	protected.Use(auth.AuthMiddleware())
+
+	protected.POST("/", h.CreateGroupHandler)
+	protected.POST("/join", h.JoinGroupHandler)
+	protected.GET("/:id", h.GetGroupByIDHandler)
 }
 
-// CreateGroupHandler handles POST /api/groups
 func (h *Handler) CreateGroupHandler(c *gin.Context) {
-	var req struct {
-		Name      string `json:"name"`
-		CreatedBy string `json:"created_by"`
-	}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+	userIDStr, ok := auth.GetUserIDFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	userID, err := uuid.Parse(req.CreatedBy)
+	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+		return
+	}
+
+	var req struct {
+		Name string `json:"name"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
 
@@ -48,8 +55,19 @@ func (h *Handler) CreateGroupHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, group)
 }
 
-// JoinGroupHandler handles POST /api/groups/join
 func (h *Handler) JoinGroupHandler(c *gin.Context) {
+	userIDStr, ok := auth.GetUserIDFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	_, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+		return
+	}
+
 	var req struct {
 		InviteCode string `json:"invite_code"`
 	}
@@ -58,7 +76,7 @@ func (h *Handler) JoinGroupHandler(c *gin.Context) {
 		return
 	}
 
-	group, err := h.Service.JoinGroupByInviteCode(req.InviteCode)
+	group, err := h.Service.JoinGroupByInviteCode(req.InviteCode, userIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -67,8 +85,13 @@ func (h *Handler) JoinGroupHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, group)
 }
 
-// GetGroupByIDHandler handles GET /api/groups/:id
 func (h *Handler) GetGroupByIDHandler(c *gin.Context) {
+	_, ok := auth.GetUserIDFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
 	groupID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid group ID"})

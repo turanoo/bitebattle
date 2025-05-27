@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/turanoo/bitebattle/bitebattle-backend/internal/auth"
 	"github.com/turanoo/bitebattle/bitebattle-backend/internal/group"
+	"github.com/turanoo/bitebattle/bitebattle-backend/internal/poll"
 	"github.com/turanoo/bitebattle/bitebattle-backend/internal/user"
 )
 
@@ -26,5 +27,9 @@ func SetupRoutes(router *gin.Engine, db *sql.DB) {
 	authHandler := auth.NewHandler(userService)
 	authHandler.RegisterRoutes(api)
 
-	// Future: Add other domain routes like auth, group, poll, etc.
+	// Poll routes
+	pollService := poll.NewService(db)
+	pollHandler := poll.NewHandler(pollService)
+	pollHandler.RegisterRoutes(api)
+
 }

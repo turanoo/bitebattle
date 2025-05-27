@@ -63,3 +63,52 @@ Contributions are welcome! Please submit a pull request or open an issue for any
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for more details.
+
+## UML 
+
++---------------------+            +---------------------+
+|       users         |            |      groups         |
++---------------------+            +---------------------+
+| id (PK)             |◄────────┐  | id (PK)             |
+| name                |         └──┤ created_by (FK→users.id)
+| email (UNIQUE)      |            | name                |
+| password_hash       |            | invite_code (UNIQUE)|
+| created_at          |            | created_at          |
++---------------------+            +---------------------+
+
+        ▲                                     ▲
+        │                                     │
+        │                                     │
++---------------------+           +----------------------+
+|   group_members     |           |      restaurants     |
++---------------------+           +----------------------+
+| id (PK)             |           | id (PK)              |
+| user_id (FK→users)  |────────┐  | yelp_id (UNIQUE)     |
+| group_id (FK→groups)|──────┐│  | name                 |
+| joined_at           |      ││  | photo_url            |
++---------------------+      ││  | menu_url             |
+                             ││  | created_at           |
+                             ││  +----------------------+
+                             ││
+                             ▼▼
+                    +----------------------+
+                    |       polls          |
+                    +----------------------+
+                    | id (PK)              |
+                    | group_id (FK→groups) |
+                    | created_by (FK→users)|
+                    | status (open/closed) |
+                    | created_at           |
+                    +----------------------+
+
+                             ▲
+                             │
+                    +----------------------+
+                    |     poll_votes       |
+                    +----------------------+
+                    | id (PK)              |
+                    | poll_id (FK→polls)   |
+                    | user_id (FK→users)   |
+                    | restaurant_id (FK→restaurants) |
+                    | voted_at             |
+                    +----------------------+

@@ -17,7 +17,6 @@ func NewService(db *sql.DB) *Service {
 	return &Service{DB: db}
 }
 
-// CreateGroup creates a new group
 func (s *Service) CreateGroup(name string, createdBy uuid.UUID) (*Group, error) {
 	id := uuid.New()
 	inviteCode := utils.GenerateRandomString(8) // Make sure you have this util
@@ -41,7 +40,6 @@ func (s *Service) CreateGroup(name string, createdBy uuid.UUID) (*Group, error) 
 	}, nil
 }
 
-// GetGroupByID returns a group by its ID
 func (s *Service) GetGroupByID(groupID uuid.UUID) (*Group, error) {
 	row := s.DB.QueryRow(`
 		SELECT id, name, created_by, invite_code, created_at, updated_at
@@ -62,8 +60,8 @@ func (s *Service) GetGroupByID(groupID uuid.UUID) (*Group, error) {
 	return &group, nil
 }
 
-// JoinGroupByInviteCode allows a user to join a group using the invite code
-func (s *Service) JoinGroupByInviteCode(code string) (*Group, error) {
+func (s *Service) JoinGroupByInviteCode(code, userId string) (*Group, error) {
+	// Step 1: Fetch the group by invite code
 	row := s.DB.QueryRow(`
 		SELECT id, name, created_by, invite_code, created_at, updated_at
 		FROM groups WHERE invite_code = $1
@@ -77,6 +75,16 @@ func (s *Service) JoinGroupByInviteCode(code string) (*Group, error) {
 		if err == sql.ErrNoRows {
 			return nil, errors.New("invalid invite code")
 		}
+		return nil, err
+	}
+
+	// Step 2: Insert into group_members table
+	_, err = s.DB.Exec(`
+		INSERT INTO group_members (group_id, user_id)
+		VALUES ($1, $2)
+		ON CONFLICT (group_id, user_id) DO NOTHING
+	`, group.ID, userId)
+	if err != nil {
 		return nil, err
 	}
 
