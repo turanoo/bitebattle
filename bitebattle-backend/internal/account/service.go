@@ -3,6 +3,7 @@ package account
 import (
 	"database/sql"
 	"errors"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -38,38 +39,39 @@ func isEmptyUpdateFields(name, email, password *string) bool {
 	return name == nil && email == nil && password == nil
 }
 
-// UpdateUserProfile updates the user's profile fields based on the provided values.
-// If a field (name, email, or password) is nil, it will not be updated.
-// Returns an error if no fields are provided for updating or if the update operation fails.
 func (s *Service) UpdateUserProfile(userID uuid.UUID, name, email, password *string) error {
 	if isEmptyUpdateFields(name, email, password) {
 		return errors.New("no fields provided for updating user profile")
 	}
 
-	query := "UPDATE users SET "
-	params := map[string]interface{}{"id": userID}
+	setClauses := []string{}
+	args := []interface{}{}
+	argIdx := 1
 
 	if name != nil {
-		query += "name = :name, "
-		params["name"] = *name
+		setClauses = append(setClauses, "name = $"+strconv.Itoa(argIdx))
+		args = append(args, *name)
+		argIdx++
 	}
 	if email != nil {
-		query += "email = :email, "
-		params["email"] = *email
+		setClauses = append(setClauses, "email = $"+strconv.Itoa(argIdx))
+		args = append(args, *email)
+		argIdx++
 	}
 	if password != nil {
 		hashed, err := bcrypt.GenerateFromPassword([]byte(*password), bcrypt.DefaultCost)
 		if err != nil {
 			return err
 		}
-		query += "password = :password, "
-		params["password"] = string(hashed)
+		setClauses = append(setClauses, "password_hash = $"+strconv.Itoa(argIdx))
+		args = append(args, string(hashed))
+		argIdx++
 	}
 
-	query = strings.TrimSuffix(query, ", ") // remove trailing comma
-	query += " WHERE id = :id"
+	query := "UPDATE users SET " + strings.Join(setClauses, ", ") + " WHERE id = $" + strconv.Itoa(argIdx)
+	args = append(args, userID)
 
-	_, err := s.DB.Exec(query, params)
+	_, err := s.DB.Exec(query, args...)
 	return err
 }
 

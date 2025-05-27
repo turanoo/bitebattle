@@ -89,7 +89,12 @@ func (h *Handler) GetUserGroups(c *gin.Context) {
 }
 
 func (h *Handler) GetUserPolls(c *gin.Context) {
-	userID := c.MustGet("userID").(uuid.UUID)
+	userIDStr := c.MustGet("userID").(string)
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		return
+	}
 
 	polls, err := h.Service.GetUserPolls(userID)
 	if err != nil {
