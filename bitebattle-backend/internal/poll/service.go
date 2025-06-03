@@ -84,7 +84,7 @@ func (s *Service) GetPolls(userID uuid.UUID) ([]PollSummary, error) {
 	return polls, nil
 }
 
-func (s *Service) JoinPoll(inviteCode, userId string) (*Poll, error) {
+func (s *Service) JoinPoll(inviteCode string, userId uuid.UUID) (*Poll, error) {
 	row := s.DB.QueryRow(`
 		SELECT id, name, created_by, invite_code, created_at, updated_at
 		FROM polls WHERE invite_code = $1
@@ -92,7 +92,7 @@ func (s *Service) JoinPoll(inviteCode, userId string) (*Poll, error) {
 
 	var poll Poll
 	err := row.Scan(
-		&poll.ID, &poll.Name, &poll.InviteCode, &poll.CreatedBy, &poll.CreatedAt, &poll.UpdatedAt,
+		&poll.ID, &poll.Name, &poll.CreatedBy, &poll.InviteCode, &poll.CreatedAt, &poll.UpdatedAt,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -102,13 +102,15 @@ func (s *Service) JoinPoll(inviteCode, userId string) (*Poll, error) {
 	}
 
 	_, err = s.DB.Exec(`
-		INSERT INTO polls (poll_id, user_id)
+		INSERT INTO polls_members (poll_id, user_id)
 		VALUES ($1, $2)
 		ON CONFLICT (poll_id, user_id) DO NOTHING
 	`, poll.ID, userId)
 	if err != nil {
 		return nil, err
 	}
+
+	poll.Role = "member" // Default role for joined users
 
 	return &poll, nil
 }

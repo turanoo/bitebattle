@@ -21,6 +21,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	polls.Use(auth.AuthMiddleware())
 	polls.POST("", h.CreatePollHandler)
 	polls.GET("", h.GetUserPolls)
+	polls.POST("/join/:inviteCode", h.JoinPoll)
 	polls.GET("/:pollId", h.GetPollHandler)
 	polls.POST("/:pollId/options", h.AddOptionHandler)
 	polls.POST("/:pollId/vote", h.CastVoteHandler)
@@ -68,6 +69,34 @@ func (h *Handler) GetPollHandler(c *gin.Context) {
 	poll, err := h.Service.GetPoll(pollID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get poll"})
+		return
+	}
+
+	c.JSON(http.StatusOK, poll)
+}
+
+func (h *Handler) JoinPoll(c *gin.Context) {
+	inviteCode := c.Param("inviteCode")
+	if inviteCode == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invite code is required"})
+		return
+	}
+
+	userIDStr, ok := auth.GetUserIDFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+		return
+	}
+
+	poll, err := h.Service.JoinPoll(inviteCode, userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to join poll"})
 		return
 	}
 
