@@ -20,7 +20,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	polls := rg.Group("/polls")
 	polls.Use(auth.AuthMiddleware())
 	polls.POST("", h.CreatePollHandler)
-	polls.GET("", h.GetUserPolls)
+	polls.GET("", h.GetPolls)
 	polls.POST("/join/:inviteCode", h.JoinPoll)
 	polls.GET("/:pollId", h.GetPollHandler)
 	polls.POST("/:pollId/options", h.AddOptionHandler)
@@ -59,6 +59,23 @@ func (h *Handler) CreatePollHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, poll)
 }
 
+func (h *Handler) GetPolls(c *gin.Context) {
+	userIDStr := c.MustGet("userID").(string)
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		return
+	}
+
+	polls, err := h.Service.GetPolls(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch polls"})
+		return
+	}
+
+	c.JSON(http.StatusOK, polls)
+}
+
 func (h *Handler) GetPollHandler(c *gin.Context) {
 	pollID, err := uuid.Parse(c.Param("pollId"))
 	if err != nil {
@@ -66,7 +83,19 @@ func (h *Handler) GetPollHandler(c *gin.Context) {
 		return
 	}
 
-	poll, err := h.Service.GetPoll(pollID)
+	userIDStr, ok := auth.GetUserIDFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+		return
+	}
+
+	poll, err := h.Service.GetPoll(pollID, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get poll"})
 		return
@@ -110,7 +139,7 @@ func (h *Handler) AddOptionHandler(c *gin.Context) {
 		return
 	}
 
-	var req struct {
+	var req []struct {
 		RestaurantID string `json:"restaurant_id"`
 		Name         string `json:"name"`
 		ImageURL     string `json:"image_url"`
@@ -121,13 +150,22 @@ func (h *Handler) AddOptionHandler(c *gin.Context) {
 		return
 	}
 
-	option, err := h.Service.AddOption(pollID, req.RestaurantID, req.Name, req.ImageURL, req.MenuURL)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add option"})
+	if len(req) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no options provided"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, option)
+	var addedOptions []PollOption
+	for _, opt := range req {
+		option, err := h.Service.AddOption(pollID, opt.RestaurantID, opt.Name, opt.ImageURL, opt.MenuURL)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add option"})
+			return
+		}
+		addedOptions = append(addedOptions, *option)
+	}
+
+	c.JSON(http.StatusCreated, addedOptions)
 }
 
 func (h *Handler) CastVoteHandler(c *gin.Context) {
@@ -186,21 +224,4 @@ func (h *Handler) GetResultsHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, results)
-}
-
-func (h *Handler) GetUserPolls(c *gin.Context) {
-	userIDStr := c.MustGet("userID").(string)
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
-		return
-	}
-
-	polls, err := h.Service.GetPolls(userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch polls"})
-		return
-	}
-
-	c.JSON(http.StatusOK, polls)
 }

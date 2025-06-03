@@ -16,8 +16,12 @@ struct PollsView: View {
     struct Poll: Identifiable, Decodable {
         let id: String
         let name: String
-        let role: String
         let invite_code: String?
+        let role: String
+        let members: [String]
+        let created_by: String
+        let created_at: String
+        let updated_at: String
     }
 
     var body: some View {
@@ -66,7 +70,7 @@ struct PollsView: View {
                 ScrollView {
                     VStack(spacing: 18) {
                         ForEach(polls) { poll in
-                            NavigationLink(destination: Text("Poll Details for \(poll.name)")) {
+                            NavigationLink(destination: PollDetailView(poll: poll)) {
                                 VStack(alignment: .leading, spacing: 8) {
                                     HStack {
                                         Text(poll.name)
@@ -198,11 +202,11 @@ struct PollsView: View {
                                         HStack {
                                             Image(systemName: "plus.circle.fill")
                                                 .foregroundColor(.white)
-                                            Text("Add New Poll")
+                                            Text("Add Poll")
                                                 .fontWeight(.semibold)
                                                 .foregroundColor(.white)
                                         }
-                                        .frame(maxWidth: .infinity)
+                                        .frame(maxWidth: .infinity, minHeight: 48)
                                         .padding()
                                         .background(Color.pink.opacity(0.7))
                                         .cornerRadius(14)
@@ -218,7 +222,7 @@ struct PollsView: View {
                                                 .fontWeight(.semibold)
                                                 .foregroundColor(.white)
                                         }
-                                        .frame(maxWidth: .infinity)
+                                        .frame(maxWidth: .infinity, minHeight: 48)
                                         .padding()
                                         .background(Color.orange.opacity(0.7))
                                         .cornerRadius(14)

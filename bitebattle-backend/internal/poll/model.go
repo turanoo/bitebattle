@@ -7,13 +7,14 @@ import (
 )
 
 type Poll struct {
-	ID         uuid.UUID `json:"id"`
-	Name       string    `json:"name"`
-	InviteCode string    `json:"invite_code"`
-	Role       string    `json:"role"`
-	CreatedBy  uuid.UUID `json:"created_by"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	ID         uuid.UUID   `json:"id"`
+	Name       string      `json:"name"`
+	InviteCode string      `json:"invite_code"`
+	Role       string      `json:"role"`
+	Members    []uuid.UUID `json:"members"` // User IDs of members in the poll
+	CreatedBy  uuid.UUID   `json:"created_by"`
+	CreatedAt  time.Time   `json:"created_at"`
+	UpdatedAt  time.Time   `json:"updated_at"`
 }
 
 type PollOption struct {

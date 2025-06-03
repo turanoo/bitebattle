@@ -55,12 +55,15 @@ func (s *Service) CreatePoll(name string, createdBy uuid.UUID) (*Poll, error) {
 	return &poll, nil
 }
 
-func (s *Service) GetPolls(userID uuid.UUID) ([]PollSummary, error) {
+func (s *Service) GetPolls(userID uuid.UUID) ([]Poll, error) {
 	rows, err := s.DB.Query(`
-		SELECT p.id, p.name, p.invite_code,
+		SELECT p.id, p.name, p.invite_code, p.created_by, p.created_at, p.updated_at,
 			CASE 
 				WHEN p.created_by = $1 THEN 'owner'
-				ELSE 'member'
+				WHEN EXISTS (
+					SELECT 1 FROM polls_members WHERE poll_id = p.id AND user_id = $1
+				) THEN 'member'
+				ELSE NULL
 			END as role
 		FROM polls p
 		LEFT JOIN polls_members pm ON p.id = pm.poll_id
@@ -72,16 +75,89 @@ func (s *Service) GetPolls(userID uuid.UUID) ([]PollSummary, error) {
 	}
 	defer rows.Close()
 
-	var polls []PollSummary
+	polls := []Poll{}
 	for rows.Next() {
-		var p PollSummary
-		if err := rows.Scan(&p.ID, &p.Name, &p.InviteCode, &p.Role); err != nil {
+		var poll Poll
+		if err := rows.Scan(
+			&poll.ID,
+			&poll.Name,
+			&poll.InviteCode,
+			&poll.CreatedBy,
+			&poll.CreatedAt,
+			&poll.UpdatedAt,
+			&poll.Role,
+		); err != nil {
 			return nil, err
 		}
-		polls = append(polls, p)
+
+		// Fetch poll members for each poll
+		memberRows, err := s.DB.Query(`
+			SELECT user_id FROM polls_members WHERE poll_id = $1
+		`, poll.ID)
+		if err != nil {
+			return nil, err
+		}
+		members := []uuid.UUID{}
+		for memberRows.Next() {
+			var memberID uuid.UUID
+			if err := memberRows.Scan(&memberID); err != nil {
+				memberRows.Close()
+				return nil, err
+			}
+			members = append(members, memberID)
+		}
+		memberRows.Close()
+		poll.Members = members
+
+		polls = append(polls, poll)
 	}
 
 	return polls, nil
+}
+
+// Get a poll by its ID
+func (s *Service) GetPoll(pollID, userId uuid.UUID) (*Poll, error) {
+	row := s.DB.QueryRow(`
+		SELECT id, name, invite_code, created_by, created_at, updated_at,
+			CASE 
+				WHEN created_by = $2 THEN 'owner'
+				WHEN EXISTS (
+					SELECT 1 FROM polls_members WHERE poll_id = polls.id AND user_id = $2
+				) THEN 'member'
+				ELSE NULL
+			END as role
+		FROM polls
+		WHERE id = $1
+	`, pollID, userId)
+
+	var poll Poll
+	if err := row.Scan(&poll.ID, &poll.Name, &poll.InviteCode, &poll.CreatedBy, &poll.CreatedAt, &poll.UpdatedAt, &poll.Role); err != nil {
+		if err == sql.ErrNoRows || poll.Role == "" {
+			return nil, nil // Poll not found or user not a member/owner
+		}
+		return nil, err
+	}
+
+	// Fetch poll members
+	memberRows, err := s.DB.Query(`
+		SELECT user_id FROM polls_members WHERE poll_id = $1
+	`, pollID)
+	if err != nil {
+		return nil, err
+	}
+	defer memberRows.Close()
+
+	members := []uuid.UUID{}
+	for memberRows.Next() {
+		var memberID uuid.UUID
+		if err := memberRows.Scan(&memberID); err != nil {
+			return nil, err
+		}
+		members = append(members, memberID)
+	}
+	poll.Members = members
+
+	return &poll, nil
 }
 
 func (s *Service) JoinPoll(inviteCode string, userId uuid.UUID) (*Poll, error) {
@@ -115,30 +191,14 @@ func (s *Service) JoinPoll(inviteCode string, userId uuid.UUID) (*Poll, error) {
 	return &poll, nil
 }
 
-// Get a poll by its ID
-func (s *Service) GetPoll(pollID uuid.UUID) (*Poll, error) {
-	row := s.DB.QueryRow(`
-		SELECT id, name, invite_code, created_by, created_at, updated_at
-		FROM polls WHERE id = $1
-	`, pollID)
-	var poll Poll
-	if err := row.Scan(&poll.ID, &poll.Name, &poll.InviteCode, &poll.CreatedBy, &poll.CreatedAt, &poll.UpdatedAt); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil // Poll not found
-		}
-		return nil, err // Other error
-	}
-	return &poll, nil
-}
-
 // Add a restaurant option to the poll
 func (s *Service) AddOption(pollID uuid.UUID, restaurantID, name, imageURL, menuURL string) (*PollOption, error) {
 	id := uuid.New()
 
 	_, err := s.DB.Exec(`
-		INSERT INTO poll_options (id, poll_id, restaurant_id, name, image_url, menu_url)
-		VALUES ($1, $2, $3, $4, $5, $6)
-	`, id, pollID, restaurantID, name, imageURL, menuURL)
+        INSERT INTO poll_options (id, poll_id, restaurant_id, name, image_url, menu_url)
+        VALUES ($1, $2, $3, $4, $5, $6)
+    `, id, pollID, restaurantID, name, imageURL, menuURL)
 
 	if err != nil {
 		return nil, err
@@ -190,13 +250,14 @@ func (s *Service) GetResults(pollID uuid.UUID) ([]PollResult, error) {
 	}
 	defer rows.Close()
 
-	var results []PollResult
+	results := []PollResult{}
 	for rows.Next() {
 		var res PollResult
-		var voterIds []uuid.UUID
 		var optionID uuid.UUID
 		var optionName string
 		var voteCount int
+
+		voterIds := []uuid.UUID{}
 
 		// Scan option basic info
 		if err := rows.Scan(&optionID, &optionName, &voteCount); err != nil {
