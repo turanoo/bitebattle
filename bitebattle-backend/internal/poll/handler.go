@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/turanoo/bitebattle/bitebattle-backend/internal/auth"
 )
 
 type Handler struct {
@@ -17,40 +18,60 @@ func NewHandler(service *Service) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	polls := rg.Group("/polls")
-	polls.POST("/", h.CreatePollHandler)
+	polls.Use(auth.AuthMiddleware())
+	polls.POST("", h.CreatePollHandler)
+	polls.GET("", h.GetUserPolls)
+	polls.GET("/:pollId", h.GetPollHandler)
 	polls.POST("/:pollId/options", h.AddOptionHandler)
 	polls.POST("/:pollId/vote", h.CastVoteHandler)
 	polls.GET("/:pollId/results", h.GetResultsHandler)
+
 }
 
 func (h *Handler) CreatePollHandler(c *gin.Context) {
 	var req struct {
-		GroupID   string `json:"group_id"`
-		CreatedBy string `json:"created_by"`
+		Name string `json:"name"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
 
-	groupID, err := uuid.Parse(req.GroupID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid group ID"})
+	userIDStr, ok := auth.GetUserIDFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
-	userID, err := uuid.Parse(req.CreatedBy)
+
+	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
 		return
 	}
 
-	poll, err := h.Service.CreatePoll(groupID, userID)
+	poll, err := h.Service.CreatePoll(req.Name, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create poll"})
 		return
 	}
 
 	c.JSON(http.StatusCreated, poll)
+}
+
+func (h *Handler) GetPollHandler(c *gin.Context) {
+	pollID, err := uuid.Parse(c.Param("pollId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid poll ID"})
+		return
+	}
+
+	poll, err := h.Service.GetPoll(pollID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get poll"})
+		return
+	}
+
+	c.JSON(http.StatusOK, poll)
 }
 
 func (h *Handler) AddOptionHandler(c *gin.Context) {
@@ -89,21 +110,27 @@ func (h *Handler) CastVoteHandler(c *gin.Context) {
 
 	var req struct {
 		OptionID string `json:"option_id"`
-		UserID   string `json:"user_id"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
 
+	userIDStr, ok := auth.GetUserIDFromContext(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+		return
+	}
+
 	optionID, err := uuid.Parse(req.OptionID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid option ID"})
-		return
-	}
-	userID, err := uuid.Parse(req.UserID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
 		return
 	}
 
@@ -130,4 +157,21 @@ func (h *Handler) GetResultsHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, results)
+}
+
+func (h *Handler) GetUserPolls(c *gin.Context) {
+	userIDStr := c.MustGet("userID").(string)
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		return
+	}
+
+	polls, err := h.Service.GetPolls(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch polls"})
+		return
+	}
+
+	c.JSON(http.StatusOK, polls)
 }

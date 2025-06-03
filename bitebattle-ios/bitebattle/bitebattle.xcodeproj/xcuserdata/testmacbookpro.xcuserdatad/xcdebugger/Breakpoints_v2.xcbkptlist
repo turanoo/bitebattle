@@ -1,23 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Bucket
-   uuid = "0043E335-F9DD-4042-80B0-A0EB1E80EFFC"
+   uuid = "EAEAD33A-B170-4139-BB0B-4E993D17A819"
    type = "1"
    version = "2.0">
    <Breakpoints>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "ACB01DF1-4335-46EC-9605-4994BB1B3BF6"
-            shouldBeEnabled = "Yes"
+            uuid = "C5D2DDE6-A4DB-4EDB-9289-73A382617033"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "bitebattle/ContentView.swift"
+            filePath = "bitebattle/App/AppRouter.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "9"
-            endingLineNumber = "9"
-            landmarkName = "ContentView"
-            landmarkType = "14">
+            startingLineNumber = "10"
+            endingLineNumber = "10"
+            landmarkName = "body"
+            landmarkType = "24">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "514062F6-5693-4D79-8303-8F1D86211E5D"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "bitebattle/App/AppRouter.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "11"
+            endingLineNumber = "11"
+            landmarkName = "body"
+            landmarkType = "24">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

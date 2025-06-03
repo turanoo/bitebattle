@@ -2,9 +2,11 @@ package poll
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/utils"
 )
 
 type Service struct {
@@ -16,26 +18,115 @@ func NewService(db *sql.DB) *Service {
 }
 
 // Create a new poll for a group by a user
-func (s *Service) CreatePoll(groupID, createdBy uuid.UUID) (*Poll, error) {
+func (s *Service) CreatePoll(name string, createdBy uuid.UUID) (*Poll, error) {
 	id := uuid.New()
 	now := time.Now()
+	inviteCode := utils.GenerateRandomString(8) // Make sure you have this util
 
 	_, err := s.DB.Exec(`
-		INSERT INTO polls (id, group_id, created_by, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5)
-	`, id, groupID, createdBy, now, now)
+		INSERT INTO polls (id, name, invite_code, created_by, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6)
+	`, id, name, inviteCode, createdBy, now, now)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &Poll{
-		ID:        id,
-		GroupID:   groupID,
-		CreatedBy: createdBy,
-		CreatedAt: now,
-		UpdatedAt: now,
-	}, nil
+	poll := Poll{
+		ID:         id,
+		Name:       name,
+		InviteCode: inviteCode,
+		Role:       "owner", // Creator is always the owner
+		CreatedBy:  createdBy,
+		CreatedAt:  now,
+		UpdatedAt:  now,
+	}
+
+	// Insert the creator into the poll participants
+	_, err = s.DB.Exec(`
+		INSERT INTO polls_members (poll_id, user_id)
+		VALUES ($1, $2)
+		ON CONFLICT (poll_id, user_id) DO NOTHING
+	`, poll.ID, createdBy)
+	if err != nil {
+		return nil, err
+	}
+
+	return &poll, nil
+}
+
+func (s *Service) GetPolls(userID uuid.UUID) ([]PollSummary, error) {
+	rows, err := s.DB.Query(`
+		SELECT p.id, p.name, p.invite_code,
+			CASE 
+				WHEN p.created_by = $1 THEN 'owner'
+				ELSE 'member'
+			END as role
+		FROM polls p
+		LEFT JOIN polls_members pm ON p.id = pm.poll_id
+		WHERE p.created_by = $1 OR pm.user_id = $1
+		GROUP BY p.id
+	`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var polls []PollSummary
+	for rows.Next() {
+		var p PollSummary
+		if err := rows.Scan(&p.ID, &p.Name, &p.InviteCode, &p.Role); err != nil {
+			return nil, err
+		}
+		polls = append(polls, p)
+	}
+
+	return polls, nil
+}
+
+func (s *Service) JoinPoll(inviteCode, userId string) (*Poll, error) {
+	row := s.DB.QueryRow(`
+		SELECT id, name, created_by, invite_code, created_at, updated_at
+		FROM polls WHERE invite_code = $1
+	`, inviteCode)
+
+	var poll Poll
+	err := row.Scan(
+		&poll.ID, &poll.Name, &poll.InviteCode, &poll.CreatedBy, &poll.CreatedAt, &poll.UpdatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("invalid invite code")
+		}
+		return nil, err
+	}
+
+	_, err = s.DB.Exec(`
+		INSERT INTO polls (poll_id, user_id)
+		VALUES ($1, $2)
+		ON CONFLICT (poll_id, user_id) DO NOTHING
+	`, poll.ID, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &poll, nil
+}
+
+// Get a poll by its ID
+func (s *Service) GetPoll(pollID uuid.UUID) (*Poll, error) {
+	row := s.DB.QueryRow(`
+		SELECT id, name, invite_code, created_by, created_at, updated_at
+		FROM polls WHERE id = $1
+	`, pollID)
+	var poll Poll
+	if err := row.Scan(&poll.ID, &poll.Name, &poll.InviteCode, &poll.CreatedBy, &poll.CreatedAt, &poll.UpdatedAt); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // Poll not found
+		}
+		return nil, err // Other error
+	}
+	return &poll, nil
 }
 
 // Add a restaurant option to the poll
@@ -100,9 +191,38 @@ func (s *Service) GetResults(pollID uuid.UUID) ([]PollResult, error) {
 	var results []PollResult
 	for rows.Next() {
 		var res PollResult
-		if err := rows.Scan(&res.OptionID, &res.OptionName, &res.VoteCount); err != nil {
+		var voterIds []uuid.UUID
+		var optionID uuid.UUID
+		var optionName string
+		var voteCount int
+
+		// Scan option basic info
+		if err := rows.Scan(&optionID, &optionName, &voteCount); err != nil {
 			return nil, err
 		}
+
+		// Query voter ids for this option
+		voterRows, err := s.DB.Query(`
+			SELECT user_id FROM poll_votes WHERE option_id = $1
+		`, optionID)
+		if err != nil {
+			return nil, err
+		}
+		for voterRows.Next() {
+			var voterID uuid.UUID
+			if err := voterRows.Scan(&voterID); err != nil {
+				voterRows.Close()
+				return nil, err
+			}
+			voterIds = append(voterIds, voterID)
+		}
+		voterRows.Close()
+
+		res.OptionID = optionID
+		res.OptionName = optionName
+		res.VoteCount = voteCount
+		res.VoterIDs = voterIds
+
 		results = append(results, res)
 	}
 

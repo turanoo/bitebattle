@@ -37,7 +37,12 @@ func (h *Handler) CreateMatchHandler(c *gin.Context) {
 		return
 	}
 
-	inviterID := c.MustGet("userID").(uuid.UUID)
+	userId := c.MustGet("userID").(string)
+	inviterID, err := uuid.Parse(userId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid inviter ID"})
+		return
+	}
 	inviteeID, err := uuid.Parse(req.InviteeID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid invitee ID"})

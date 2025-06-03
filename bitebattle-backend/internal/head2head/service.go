@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 type Service struct {
@@ -24,7 +25,7 @@ func (s *Service) CreateMatch(inviterID, inviteeID uuid.UUID, categories []strin
 	_, err := s.DB.Exec(`
 		INSERT INTO head2head_matches (id, inviter_id, invitee_id, status, categories, created_at, updated_at)
 		VALUES ($1, $2, $3, 'pending', $4, $5, $6)
-	`, id, inviterID, inviteeID, categories, now, now)
+	`, id, inviterID, inviteeID, pq.Array(categories), now, now)
 
 	if err != nil {
 		return nil, err

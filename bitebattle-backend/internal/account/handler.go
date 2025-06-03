@@ -20,10 +20,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	account := rg.Group("/account")
 	account.Use(auth.AuthMiddleware())
 
-	account.GET("/", h.GetProfile)
-	account.PUT("/", h.UpdateProfile)
-	account.GET("/groups", h.GetUserGroups)
-	account.GET("/polls", h.GetUserPolls)
+	account.GET("", h.GetProfile)
+	account.PUT("", h.UpdateProfile)
 }
 
 func (h *Handler) GetProfile(c *gin.Context) {
@@ -69,38 +67,4 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "profile updated"})
-}
-
-func (h *Handler) GetUserGroups(c *gin.Context) {
-	userIDStr := c.MustGet("userID").(string)
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
-		return
-	}
-
-	groups, err := h.Service.GetUserGroups(userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch groups"})
-		return
-	}
-
-	c.JSON(http.StatusOK, groups)
-}
-
-func (h *Handler) GetUserPolls(c *gin.Context) {
-	userIDStr := c.MustGet("userID").(string)
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
-		return
-	}
-
-	polls, err := h.Service.GetUserPolls(userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch polls"})
-		return
-	}
-
-	c.JSON(http.StatusOK, polls)
 }

@@ -3,12 +3,14 @@ package main
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
 	"github.com/turanoo/bitebattle/bitebattle-backend/api"
 	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/db"
+	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/logger"
 )
 
 func main() {
@@ -20,9 +22,12 @@ func main() {
 		log.Fatalf("Failed to connect to DB: %v", err)
 	}
 
+	logger.Init()
+
 	database := db.GetDB()
 
 	router := gin.Default()
+	router.Use(RequestLogger())
 
 	api.SetupRoutes(router, database)
 
@@ -33,5 +38,19 @@ func main() {
 	log.Printf("Server running on port %s", port)
 	if err := router.Run(":" + port); err != nil {
 		log.Fatalf("Server failed: %v", err)
+	}
+}
+
+func RequestLogger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+		path := c.Request.URL.Path
+		method := c.Request.Method
+
+		c.Next()
+
+		status := c.Writer.Status()
+		duration := time.Since(start)
+		logger.Infof("%s %s %d %s", method, path, status, duration)
 	}
 }

@@ -16,7 +16,7 @@ func NewHandler(service *Service) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	users := rg.Group("/users")
-	users.POST("/", h.CreateUser)
+	users.POST("", h.CreateUser)
 	users.GET("/:email", h.GetUserByEmail)
 }
 

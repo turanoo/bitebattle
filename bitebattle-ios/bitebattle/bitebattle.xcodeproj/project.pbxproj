@@ -7,11 +7,11 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		772BF2B72DE682A9000A9F7F /* bitebattle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = bitebattle.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		772BF3412DE8D070000A9F7F /* bitebattle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = bitebattle.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		772BF2B92DE682A9000A9F7F /* bitebattle */ = {
+		772BF3432DE8D070000A9F7F /* bitebattle */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = bitebattle;
 			sourceTree = "<group>";
@@ -19,7 +19,7 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		772BF2B42DE682A9000A9F7F /* Frameworks */ = {
+		772BF33E2DE8D070000A9F7F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -29,18 +29,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		772BF2AE2DE682A9000A9F7F = {
+		772BF3382DE8D070000A9F7F = {
 			isa = PBXGroup;
 			children = (
-				772BF2B92DE682A9000A9F7F /* bitebattle */,
-				772BF2B82DE682A9000A9F7F /* Products */,
+				772BF3432DE8D070000A9F7F /* bitebattle */,
+				772BF3422DE8D070000A9F7F /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		772BF2B82DE682A9000A9F7F /* Products */ = {
+		772BF3422DE8D070000A9F7F /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				772BF2B72DE682A9000A9F7F /* bitebattle.app */,
+				772BF3412DE8D070000A9F7F /* bitebattle.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,64 +48,64 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		772BF2B62DE682A9000A9F7F /* bitebattle */ = {
+		772BF3402DE8D070000A9F7F /* bitebattle */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 772BF2C22DE682AB000A9F7F /* Build configuration list for PBXNativeTarget "bitebattle" */;
+			buildConfigurationList = 772BF34C2DE8D072000A9F7F /* Build configuration list for PBXNativeTarget "bitebattle" */;
 			buildPhases = (
-				772BF2B32DE682A9000A9F7F /* Sources */,
-				772BF2B42DE682A9000A9F7F /* Frameworks */,
-				772BF2B52DE682A9000A9F7F /* Resources */,
+				772BF33D2DE8D070000A9F7F /* Sources */,
+				772BF33E2DE8D070000A9F7F /* Frameworks */,
+				772BF33F2DE8D070000A9F7F /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				772BF2B92DE682A9000A9F7F /* bitebattle */,
+				772BF3432DE8D070000A9F7F /* bitebattle */,
 			);
 			name = bitebattle;
 			packageProductDependencies = (
 			);
 			productName = bitebattle;
-			productReference = 772BF2B72DE682A9000A9F7F /* bitebattle.app */;
+			productReference = 772BF3412DE8D070000A9F7F /* bitebattle.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		772BF2AF2DE682A9000A9F7F /* Project object */ = {
+		772BF3392DE8D070000A9F7F /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1630;
 				LastUpgradeCheck = 1630;
 				TargetAttributes = {
-					772BF2B62DE682A9000A9F7F = {
+					772BF3402DE8D070000A9F7F = {
 						CreatedOnToolsVersion = 16.3;
 					};
 				};
 			};
-			buildConfigurationList = 772BF2B22DE682A9000A9F7F /* Build configuration list for PBXProject "bitebattle" */;
+			buildConfigurationList = 772BF33C2DE8D070000A9F7F /* Build configuration list for PBXProject "bitebattle" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = 772BF2AE2DE682A9000A9F7F;
+			mainGroup = 772BF3382DE8D070000A9F7F;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 772BF2B82DE682A9000A9F7F /* Products */;
+			productRefGroup = 772BF3422DE8D070000A9F7F /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				772BF2B62DE682A9000A9F7F /* bitebattle */,
+				772BF3402DE8D070000A9F7F /* bitebattle */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		772BF2B52DE682A9000A9F7F /* Resources */ = {
+		772BF33F2DE8D070000A9F7F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -115,7 +115,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		772BF2B32DE682A9000A9F7F /* Sources */ = {
+		772BF33D2DE8D070000A9F7F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -125,7 +125,7 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		772BF2C02DE682AB000A9F7F /* Debug */ = {
+		772BF34A2DE8D072000A9F7F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -160,7 +160,6 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 5XR9XFNTAE;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -189,7 +188,7 @@
 			};
 			name = Debug;
 		};
-		772BF2C12DE682AB000A9F7F /* Release */ = {
+		772BF34B2DE8D072000A9F7F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -224,7 +223,6 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 5XR9XFNTAE;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -246,14 +244,13 @@
 			};
 			name = Release;
 		};
-		772BF2C32DE682AB000A9F7F /* Debug */ = {
+		772BF34D2DE8D072000A9F7F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 5XR9XFNTAE;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -274,14 +271,13 @@
 			};
 			name = Debug;
 		};
-		772BF2C42DE682AB000A9F7F /* Release */ = {
+		772BF34E2DE8D072000A9F7F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 5XR9XFNTAE;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -305,25 +301,25 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		772BF2B22DE682A9000A9F7F /* Build configuration list for PBXProject "bitebattle" */ = {
+		772BF33C2DE8D070000A9F7F /* Build configuration list for PBXProject "bitebattle" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				772BF2C02DE682AB000A9F7F /* Debug */,
-				772BF2C12DE682AB000A9F7F /* Release */,
+				772BF34A2DE8D072000A9F7F /* Debug */,
+				772BF34B2DE8D072000A9F7F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		772BF2C22DE682AB000A9F7F /* Build configuration list for PBXNativeTarget "bitebattle" */ = {
+		772BF34C2DE8D072000A9F7F /* Build configuration list for PBXNativeTarget "bitebattle" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				772BF2C32DE682AB000A9F7F /* Debug */,
-				772BF2C42DE682AB000A9F7F /* Release */,
+				772BF34D2DE8D072000A9F7F /* Debug */,
+				772BF34E2DE8D072000A9F7F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 772BF2AF2DE682A9000A9F7F /* Project object */;
+	rootObject = 772BF3392DE8D070000A9F7F /* Project object */;
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/turanoo/bitebattle/bitebattle-backend/internal/user"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
