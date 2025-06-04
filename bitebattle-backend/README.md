@@ -262,59 +262,27 @@ All available endpoints:
 
 | Endpoint                                 | Method | Description                                 |
 |-------------------------------------------|--------|---------------------------------------------|
-| `/api/auth/register`                      | POST   | Register a new user                         |
-| `/api/auth/login`                         | POST   | User login                                  |
-
-| `/api/account`                            | GET    | Get user profile                            |
-| `/api/account`                            | PUT    | Update user profile                         |
-
-| `/api/users/:id`                          | GET    | Get user by ID                              |
-| `/api/users/:email`                       | GET    | Get user by email                           |
-
-| `/api/polls`                              | POST   | Create a poll                               |
-| `/api/polls`                              | GET    | List polls for user                         |
-| `/api/polls/join/:inviteCode`             | POST   | Join a poll by invite code                  |
-| `/api/polls/:pollId`                      | GET    | Get poll details                            |
-| `/api/polls/:pollId`                      | DELETE | Delete a poll                               |
-| `/api/polls/:pollId/options`              | POST   | Add one or more options to a poll           |
-| `/api/polls/:pollId/vote`                 | POST   | Cast a vote                                 |
-| `/api/polls/:pollId/unvote`               | POST   | Remove a vote                               |
-| `/api/polls/:pollId/results`              | GET    | Get poll results                            |
-
-| `/api/notifications`                      | GET    | Get user notifications                      |
-
-| `/api/h2h/match`                          | POST   | Create head-to-head match                   |
-| `/api/h2h/match/:id/accept`               | POST   | Accept a head-to-head match                 |
-| `/api/h2h/match/:id/swipe`                | POST   | Submit a swipe for a match                  |
-| `/api/h2h/match/:id/results`              | GET    | Get mutual likes for a match                |
-
-| `/api/restaurants/search`                 | GET    | Search restaurants (Google Places)          |
-
----
-
-## Troubleshooting
-
-- **Database connection errors:**  
-  Ensure `.env` is correct and Postgres is running (`make up`).
-
-- **Migration errors:**  
-  - *Duplicate migration file*: Remove or rename duplicates in `migrations/`.
-  - *Column does not exist*: Check your migration files and run `make migrate` again.
-
-- **Type assertion errors (`interface {} is string, not uuid.UUID`):**  
-  Always parse string IDs to `uuid.UUID` in handlers:
-  ```go
-  userIDStr := c.MustGet("userID").(string)
-  userID, err := uuid.Parse(userIDStr)
-  ```
-
-- **Null value in NOT NULL column:**  
-  Ensure all required fields are provided in your insert statements.
-
-- **Authorization header missing:**  
-  Make sure your client sends `Authorization: Bearer <token>` for protected endpoints.
-
----
+| `/api/auth/register`                     | POST   | Register a new user                         |
+| `/api/auth/login`                        | POST   | User login                                  |
+| `/api/account`                           | GET    | Get user profile                            |
+| `/api/account`                           | PUT    | Update user profile                         |
+| `/api/users/:id`                         | GET    | Get user by ID                              |
+| `/api/users/?email=`                      | GET    | Get user by email                           |
+| `/api/polls`                             | POST   | Create a poll                               |
+| `/api/polls`                             | GET    | List polls for user                         |
+| `/api/polls/:pollId/join`            | POST   | Join a poll by invite code                  |
+| `/api/polls/:pollId`                     | GET    | Get poll details                            |
+| `/api/polls/:pollId`                     | DELETE | Delete a poll                               |
+| `/api/polls/:pollId/options`             | POST   | Add one or more options to a poll           |
+| `/api/polls/:pollId/vote`                | POST   | Cast a vote                                 |
+| `/api/polls/:pollId/unvote`              | POST   | Remove a vote                               |
+| `/api/polls/:pollId/results`             | GET    | Get poll results                            |
+| `/api/notifications`                     | GET    | Get user notifications                      |
+| `/api/h2h/match`                         | POST   | Create head-to-head match                   |
+| `/api/h2h/match/:id/accept`              | POST   | Accept a head-to-head match                 |
+| `/api/h2h/match/:id/swipe`               | POST   | Submit a swipe for a match                  |
+| `/api/h2h/match/:id/results`             | GET    | Get mutual likes for a match                |
+| `/api/restaurants/search`                | GET    | Search restaurants (Google Places)          |
 
 ## Contributing
 

@@ -138,17 +138,33 @@ struct PollsView: View {
     func joinPoll() {
         guard !inviteCode.isEmpty else { return }
         isJoiningPoll = true
-        APIClient.shared.joinPoll(inviteCode: inviteCode) { result in
+        // Fetch pollId by invite code (simulate or add a lookup if needed)
+        APIClient.shared.fetchPolls { result in
             DispatchQueue.main.async {
-                isJoiningPoll = false
                 switch result {
-                case .success(_):
-                    inviteCode = ""
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        showJoinPoll = false
-                        fetchPolls()
+                case .success(let polls):
+                    if let poll = polls.first(where: { $0.invite_code == inviteCode }) {
+                        APIClient.shared.joinPoll(pollId: poll.id, inviteCode: inviteCode) { joinResult in
+                            DispatchQueue.main.async {
+                                isJoiningPoll = false
+                                switch joinResult {
+                                case .success(_):
+                                    inviteCode = ""
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                        showJoinPoll = false
+                                        fetchPolls()
+                                    }
+                                case .failure(let error):
+                                    statusMessage = error.localizedDescription
+                                }
+                            }
+                        }
+                    } else {
+                        isJoiningPoll = false
+                        statusMessage = "No poll found for invite code."
                     }
                 case .failure(let error):
+                    isJoiningPoll = false
                     statusMessage = error.localizedDescription
                 }
             }

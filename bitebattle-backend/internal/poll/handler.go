@@ -21,13 +21,13 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	polls.Use(auth.AuthMiddleware())
 	polls.POST("", h.CreatePollHandler)
 	polls.GET("", h.GetPollsHandler)
-	polls.POST("/join/:inviteCode", h.JoinPollHandler)
-	polls.GET("/:pollId", h.GetPollHandler)
-	polls.DELETE("/:pollId", h.DeletePollHandler)
-	polls.POST("/:pollId/options", h.AddOptionHandler)
-	polls.POST("/:pollId/vote", h.CastVoteHandler)
-	polls.POST("/:pollId/unvote", h.UncastVoteHandler)
-	polls.GET("/:pollId/results", h.GetResultsHandler)
+	polls.POST(":pollId/join", h.JoinPollHandler)
+	polls.GET(":pollId", h.GetPollHandler)
+	polls.DELETE(":pollId", h.DeletePollHandler)
+	polls.POST(":pollId/options", h.AddOptionHandler)
+	polls.POST(":pollId/vote", h.CastVoteHandler)
+	polls.POST(":pollId/unvote", h.UncastVoteHandler)
+	polls.GET(":pollId/results", h.GetResultsHandler)
 
 }
 
@@ -123,30 +123,33 @@ func (h *Handler) DeletePollHandler(c *gin.Context) {
 }
 
 func (h *Handler) JoinPollHandler(c *gin.Context) {
-	inviteCode := c.Param("inviteCode")
-	if inviteCode == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invite code is required"})
+	pollId := c.Param("pollId")
+	if pollId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "pollId is required"})
 		return
 	}
-
+	var req struct {
+		InviteCode string `json:"invite_code"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil || req.InviteCode == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invite_code is required in body"})
+		return
+	}
 	userIDStr, ok := auth.GetUserIDFromContext(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
-
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
 		return
 	}
-
-	poll, err := h.Service.JoinPoll(inviteCode, userID)
+	poll, err := h.Service.JoinPoll(req.InviteCode, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to join poll"})
 		return
 	}
-
 	c.JSON(http.StatusOK, poll)
 }
 

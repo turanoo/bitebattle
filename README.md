@@ -15,5 +15,3 @@ The BiteBattle iOS app provides a user-friendly interface for creating groups, j
 The backend is written in Go and handles user authentication, group management, poll creation, voting, and notifications. It uses PostgreSQL for data storage and exposes RESTful endpoints for the mobile app.
 
 For more details, see the [bitebattle-backend README](bitebattle-backend/README.md).
-
-

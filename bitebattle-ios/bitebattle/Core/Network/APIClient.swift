@@ -58,8 +58,11 @@ final class APIClient {
         }.resume()
     }
 
-    func joinPoll(inviteCode: String, completion: @escaping (Result<Poll, Error>) -> Void) {
-        guard let url = URL(string: Endpoints.joinPoll(inviteCode)), let request = makeRequest(url: url, method: "POST") else {
+    // Updated joinPoll to use pollId and inviteCode in body
+    func joinPoll(pollId: String, inviteCode: String, completion: @escaping (Result<Poll, Error>) -> Void) {
+        guard let url = URL(string: Endpoints.joinPoll(pollId)),
+              let body = try? JSONSerialization.data(withJSONObject: ["invite_code": inviteCode]),
+              let request = makeRequest(url: url, method: "POST", body: body, contentType: "application/json") else {
             completion(.failure(APIError.notLoggedIn)); return
         }
         URLSession.shared.dataTask(with: request) { data, _, error in

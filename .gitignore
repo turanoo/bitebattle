@@ -1,1 +1,43 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below if you use Go modules)
+vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# VSCode settings
+.vscode/
+.history/
+
+# Logs
+*.log
+
+# OS generated files
 .DS_Store
+Thumbs.db
+
+# exclude local dev .env
+.env
+
+# Xcode
+*.xcuserstate
+# Xcode project files
+*.xcworkspace
+# Swift Package Manager
+*.xcodeproj/project.xcworkspace/xcuserdata/
+# Swift Package Manager build artifacts
+*.build/
+# Swift Package Manager cache
+*.swiftpm/
+# Derived data          

@@ -16,8 +16,8 @@ func NewHandler(service *Service) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	users := rg.Group("/users")
-	users.GET("/:id", h.GetUser)
-	users.GET("/:email", h.GetUserByEmail)
+	users.GET(":id", h.GetUser)
+	users.GET("", h.GetUserByQuery) // Use query param for email
 }
 
 func (h *Handler) CreateUser(c *gin.Context) {
@@ -47,14 +47,17 @@ func (h *Handler) GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-func (h *Handler) GetUserByEmail(c *gin.Context) {
-	email := c.Param("email")
-
+// New handler for query param based email lookup
+func (h *Handler) GetUserByQuery(c *gin.Context) {
+	email := c.Query("email")
+	if email == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "email query param required"})
+		return
+	}
 	user, err := h.Service.GetUserByEmail(c.Request.Context(), email)
-	if err != nil {
+	if err != nil || user == nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
-
 	c.JSON(http.StatusOK, user)
 }
