@@ -17,6 +17,7 @@ help:
 	@echo "  make run             Run backend server"
 	@echo "  make dev             Full local dev (up + migrate + run)"
 	@echo "  make stop            Stop containers"
+	@echo "  make destroy         Stop and destroy containers (data will be deleted from db)"
 	@echo "  make build           Build Go binary"
 
 .PHONY: up
