@@ -11,7 +11,6 @@ BiteBattle is a Go-based RESTful API server powering the BiteBattle application.
 - [Database Schemas (UML)](#database-schemas-uml)
 - [Installation and Local Development](#installation-and-local-development)
 - [API Overview](#api-overview)
-- [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -219,6 +218,8 @@ DB_PORT=5432
 JWT_SECRET=your_jwt_secret
 GOOGLE_PLACES_API_KEY=your_google_places_api_key
 ```
+
+Ensure `docker-compose.yml`has the same values for PostgreSQL. 
 
 ### 3. Start PostgreSQL with Docker Compose
 
