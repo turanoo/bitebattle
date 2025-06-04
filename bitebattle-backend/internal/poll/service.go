@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/db"
 	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/utils"
 )
 
@@ -131,11 +132,12 @@ func (s *Service) GetPoll(pollID, userId uuid.UUID) (*Poll, error) {
 	`, pollID, userId)
 
 	var poll Poll
-	if err := row.Scan(&poll.ID, &poll.Name, &poll.InviteCode, &poll.CreatedBy, &poll.CreatedAt, &poll.UpdatedAt, &poll.Role); err != nil {
-		if err == sql.ErrNoRows || poll.Role == "" {
-			return nil, nil // Poll not found or user not a member/owner
-		}
+	err := db.ScanOne(row, &poll.ID, &poll.Name, &poll.InviteCode, &poll.CreatedBy, &poll.CreatedAt, &poll.UpdatedAt, &poll.Role)
+	if err != nil {
 		return nil, err
+	}
+	if poll.ID == uuid.Nil || poll.Role == "" {
+		return nil, sql.ErrNoRows
 	}
 
 	// Fetch poll members

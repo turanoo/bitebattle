@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/db"
 )
 
 type Service struct {
@@ -36,13 +37,13 @@ func (s *Service) GetUserByID(ctx context.Context, id string) (*User, error) {
 		FROM users WHERE id = $1
 	`, id)
 
-	if err := row.Scan(&u.ID, &u.Email, &u.Name, &u.PasswordHash, &u.CreatedAt, &u.UpdatedAt); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil // No user found with this ID
-		}
+	err := db.ScanOne(row, &u.ID, &u.Email, &u.Name, &u.PasswordHash, &u.CreatedAt, &u.UpdatedAt)
+	if err != nil {
 		return nil, err
 	}
-
+	if u.ID == "" {
+		return nil, sql.ErrNoRows
+	}
 	return &u, nil
 }
 
@@ -53,12 +54,12 @@ func (s *Service) GetUserByEmail(ctx context.Context, email string) (*User, erro
 		FROM users WHERE email = $1
 	`, email)
 
-	if err := row.Scan(&u.ID, &u.Email, &u.Name, &u.PasswordHash, &u.CreatedAt, &u.UpdatedAt); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil // No user found with this email
-		}
+	err := db.ScanOne(row, &u.ID, &u.Email, &u.Name, &u.PasswordHash, &u.CreatedAt, &u.UpdatedAt)
+	if err != nil {
 		return nil, err
 	}
-
+	if u.ID == "" {
+		return nil, sql.ErrNoRows
+	}
 	return &u, nil
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/db"
 )
 
 type Service struct {
@@ -50,14 +51,15 @@ func (s *Service) AcceptMatch(matchID, userID uuid.UUID) error {
 	`, matchID)
 
 	var inviteeID uuid.UUID
-	if err := row.Scan(&inviteeID); err != nil {
+	err := db.ScanOne(row, &inviteeID)
+	if err != nil {
 		return err
 	}
-	if inviteeID != userID {
+	if inviteeID == uuid.Nil || inviteeID != userID {
 		return sql.ErrNoRows
 	}
 
-	_, err := s.DB.Exec(`
+	_, err = s.DB.Exec(`
 		UPDATE head2head_matches SET status = 'active', updated_at = $2 WHERE id = $1
 	`, matchID, time.Now())
 	return err

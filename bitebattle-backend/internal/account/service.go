@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/db"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -28,10 +29,13 @@ func (s *Service) GetUserProfile(userID uuid.UUID) (*UserProfile, error) {
 	row := s.DB.QueryRow(`SELECT id, name, email FROM users WHERE id = $1`, userID)
 
 	var profile UserProfile
-	if err := row.Scan(&profile.ID, &profile.Name, &profile.Email); err != nil {
+	err := db.ScanOne(row, &profile.ID, &profile.Name, &profile.Email)
+	if err != nil {
 		return nil, err
 	}
-
+	if profile.ID == uuid.Nil {
+		return nil, sql.ErrNoRows
+	}
 	return &profile, nil
 }
 
@@ -71,6 +75,16 @@ func (s *Service) UpdateUserProfile(userID uuid.UUID, name, email, password *str
 	query := "UPDATE users SET " + strings.Join(setClauses, ", ") + " WHERE id = $" + strconv.Itoa(argIdx)
 	args = append(args, userID)
 
-	_, err := s.DB.Exec(query, args...)
-	return err
+	result, err := s.DB.Exec(query, args...)
+	if err != nil {
+		return err
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
 }

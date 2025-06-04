@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/turanoo/bitebattle/bitebattle-backend/internal/auth"
+	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/logger"
 )
 
 type Handler struct {
@@ -36,28 +37,33 @@ func (h *Handler) CreatePollHandler(c *gin.Context) {
 		Name string `json:"name"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
+		logger.Warnf("Invalid request in CreatePollHandler: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
 
 	userIDStr, ok := auth.GetUserIDFromContext(c)
 	if !ok {
+		logger.Warn("Unauthorized access in CreatePollHandler")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
+		logger.Warnf("Invalid user ID in CreatePollHandler: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
 		return
 	}
 
 	poll, err := h.Service.CreatePoll(req.Name, userID)
 	if err != nil {
+		logger.Errorf("Failed to create poll for user %s: %v", userID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create poll"})
 		return
 	}
 
+	logger.Infof("Poll created: %s by user %s", poll.ID, userID)
 	c.JSON(http.StatusCreated, poll)
 }
 

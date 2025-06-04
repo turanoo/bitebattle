@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 	"time"
 
@@ -14,20 +13,22 @@ import (
 )
 
 func main() {
+	logger.Init() // <-- Initialize logger first!
+
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, using system env variables")
+		logger.Warn("No .env file found, using system env variables")
 	}
 
 	if err := db.Init(); err != nil {
-		log.Fatalf("Failed to connect to DB: %v", err)
+		logger.Errorf("Failed to connect to DB: %v", err)
+		os.Exit(1)
 	}
-
-	logger.Init()
 
 	database := db.GetDB()
 
-	router := gin.Default()
+	router := gin.New()
 	router.Use(RequestLogger())
+	router.Use(ErrorRecovery())
 
 	api.SetupRoutes(router, database)
 
@@ -35,9 +36,10 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-	log.Printf("Server running on port %s", port)
+	logger.Infof("Server running on port %s", port)
 	if err := router.Run(":" + port); err != nil {
-		log.Fatalf("Server failed: %v", err)
+		logger.Errorf("Server failed: %v", err)
+		os.Exit(1)
 	}
 }
 
@@ -46,11 +48,24 @@ func RequestLogger() gin.HandlerFunc {
 		start := time.Now()
 		path := c.Request.URL.Path
 		method := c.Request.Method
+		clientIP := c.ClientIP()
 
 		c.Next()
 
 		status := c.Writer.Status()
 		duration := time.Since(start)
-		logger.Infof("%s %s %d %s", method, path, status, duration)
+		errMsg := c.Errors.ByType(gin.ErrorTypePrivate).String()
+		if errMsg != "" {
+			logger.Warnf("%s %s %d %s %s | ERR: %s", method, path, status, duration, clientIP, errMsg)
+		} else {
+			logger.Infof("%s %s %d %s %s", method, path, status, duration, clientIP)
+		}
 	}
+}
+
+func ErrorRecovery() gin.HandlerFunc {
+	return gin.CustomRecoveryWithWriter(os.Stderr, func(c *gin.Context, recovered interface{}) {
+		logger.Errorf("PANIC: %v | Path: %s | Method: %s | IP: %s", recovered, c.Request.URL.Path, c.Request.Method, c.ClientIP())
+		c.AbortWithStatusJSON(500, gin.H{"error": "internal server error"})
+	})
 }

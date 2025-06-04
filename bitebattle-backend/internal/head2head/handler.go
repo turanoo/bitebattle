@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/turanoo/bitebattle/bitebattle-backend/internal/auth"
+	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/logger"
 )
 
 type Handler struct {
@@ -33,6 +34,7 @@ func (h *Handler) CreateMatchHandler(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
+		logger.Warnf("Invalid request in CreateMatchHandler: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
@@ -40,21 +42,25 @@ func (h *Handler) CreateMatchHandler(c *gin.Context) {
 	userId := c.MustGet("userID").(string)
 	inviterID, err := uuid.Parse(userId)
 	if err != nil {
+		logger.Warnf("Invalid inviter ID in CreateMatchHandler: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid inviter ID"})
 		return
 	}
 	inviteeID, err := uuid.Parse(req.InviteeID)
 	if err != nil {
+		logger.Warnf("Invalid invitee ID in CreateMatchHandler: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid invitee ID"})
 		return
 	}
 
 	match, err := h.Service.CreateMatch(inviterID, inviteeID, req.Categories)
 	if err != nil {
+		logger.Errorf("Could not create match: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create match"})
 		return
 	}
 
+	logger.Infof("Head2Head match created: %s by %s", match.ID, inviterID)
 	c.JSON(http.StatusCreated, match)
 }
 
