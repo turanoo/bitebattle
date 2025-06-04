@@ -29,6 +29,23 @@ func (s *Service) CreateUser(ctx context.Context, u *User) (*User, error) {
 	return u, err
 }
 
+func (s *Service) GetUserByID(ctx context.Context, id string) (*User, error) {
+	var u User
+	row := s.DB.QueryRowContext(ctx, `
+		SELECT id, email, name, password_hash, created_at, updated_at
+		FROM users WHERE id = $1
+	`, id)
+
+	if err := row.Scan(&u.ID, &u.Email, &u.Name, &u.PasswordHash, &u.CreatedAt, &u.UpdatedAt); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // No user found with this ID
+		}
+		return nil, err
+	}
+
+	return &u, nil
+}
+
 func (s *Service) GetUserByEmail(ctx context.Context, email string) (*User, error) {
 	var u User
 	row := s.DB.QueryRowContext(ctx, `

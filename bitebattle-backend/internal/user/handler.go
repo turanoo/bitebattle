@@ -16,7 +16,7 @@ func NewHandler(service *Service) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	users := rg.Group("/users")
-	users.POST("", h.CreateUser)
+	users.GET("/:id", h.GetUser)
 	users.GET("/:email", h.GetUserByEmail)
 }
 
@@ -33,6 +33,18 @@ func (h *Handler) CreateUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, u)
+}
+
+func (h *Handler) GetUser(c *gin.Context) {
+	id := c.Param("id")
+
+	user, err := h.Service.GetUserByID(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
 }
 
 func (h *Handler) GetUserByEmail(c *gin.Context) {

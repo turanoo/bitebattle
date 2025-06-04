@@ -160,6 +160,60 @@ func (s *Service) GetPoll(pollID, userId uuid.UUID) (*Poll, error) {
 	return &poll, nil
 }
 
+func (s *Service) DeletePoll(pollID uuid.UUID) error {
+	// Start a transaction to ensure all deletions succeed or fail together
+	tx, err := s.DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p)
+		}
+	}()
+
+	// Delete poll_votes for poll options belonging to this poll
+	_, err = tx.Exec(`
+		DELETE FROM poll_votes WHERE option_id IN (
+			SELECT id FROM poll_options WHERE poll_id = $1
+		)
+	`, pollID)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Delete poll_options for this poll
+	_, err = tx.Exec(`
+		DELETE FROM poll_options WHERE poll_id = $1
+	`, pollID)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Delete polls_members for this poll
+	_, err = tx.Exec(`
+		DELETE FROM polls_members WHERE poll_id = $1
+	`, pollID)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Finally, delete the poll itself
+	_, err = tx.Exec(`
+		DELETE FROM polls WHERE id = $1
+	`, pollID)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
+}
+
 func (s *Service) JoinPoll(inviteCode string, userId uuid.UUID) (*Poll, error) {
 	row := s.DB.QueryRow(`
 		SELECT id, name, created_by, invite_code, created_at, updated_at
@@ -233,6 +287,27 @@ func (s *Service) CastVote(pollID, optionID, userID uuid.UUID) (*PollVote, error
 		OptionID: optionID,
 		UserID:   userID,
 	}, nil
+}
+
+func (s *Service) RemoveVote(pollID, optionID, userID uuid.UUID) error {
+	// Delete the vote if it exists
+	result, err := s.DB.Exec(`
+		DELETE FROM poll_votes WHERE poll_id = $1 AND option_id = $2 AND user_id = $3
+	`, pollID, optionID, userID)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return errors.New("vote not found")
+	}
+
+	return nil
 }
 
 // Retrieve voting results for a poll
