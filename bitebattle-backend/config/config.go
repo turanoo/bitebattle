@@ -15,7 +15,7 @@ type DbConfig struct {
 var dbConfig DbConfig
 
 func Load() {
-	// existing code ...
+
 	GooglePlacesAPIKey = os.Getenv("GOOGLE_PLACES_API_KEY")
 	dbConfig = DbConfig{
 		Host:     os.Getenv("DB_HOST"),

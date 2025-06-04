@@ -11,7 +11,7 @@ type Poll struct {
 	Name       string      `json:"name"`
 	InviteCode string      `json:"invite_code"`
 	Role       string      `json:"role"`
-	Members    []uuid.UUID `json:"members"` // User IDs of members in the poll
+	Members    []uuid.UUID `json:"members"`
 	CreatedBy  uuid.UUID   `json:"created_by"`
 	CreatedAt  time.Time   `json:"created_at"`
 	UpdatedAt  time.Time   `json:"updated_at"`

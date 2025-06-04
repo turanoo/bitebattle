@@ -18,11 +18,10 @@ func NewService(db *sql.DB) *Service {
 	return &Service{DB: db}
 }
 
-// Create a new poll for a group by a user
 func (s *Service) CreatePoll(name string, createdBy uuid.UUID) (*Poll, error) {
 	id := uuid.New()
 	now := time.Now()
-	inviteCode := utils.GenerateRandomString(8) // Make sure you have this util
+	inviteCode := utils.GenerateRandomString(8)
 
 	_, err := s.DB.Exec(`
 		INSERT INTO polls (id, name, invite_code, created_by, created_at, updated_at)
@@ -43,7 +42,6 @@ func (s *Service) CreatePoll(name string, createdBy uuid.UUID) (*Poll, error) {
 		UpdatedAt:  now,
 	}
 
-	// Insert the creator into the poll participants
 	_, err = s.DB.Exec(`
 		INSERT INTO polls_members (poll_id, user_id)
 		VALUES ($1, $2)
@@ -91,7 +89,6 @@ func (s *Service) GetPolls(userID uuid.UUID) ([]Poll, error) {
 			return nil, err
 		}
 
-		// Fetch poll members for each poll
 		memberRows, err := s.DB.Query(`
 			SELECT user_id FROM polls_members WHERE poll_id = $1
 		`, poll.ID)
@@ -116,7 +113,6 @@ func (s *Service) GetPolls(userID uuid.UUID) ([]Poll, error) {
 	return polls, nil
 }
 
-// Get a poll by its ID
 func (s *Service) GetPoll(pollID, userId uuid.UUID) (*Poll, error) {
 	row := s.DB.QueryRow(`
 		SELECT id, name, invite_code, created_by, created_at, updated_at,
@@ -140,7 +136,6 @@ func (s *Service) GetPoll(pollID, userId uuid.UUID) (*Poll, error) {
 		return nil, sql.ErrNoRows
 	}
 
-	// Fetch poll members
 	memberRows, err := s.DB.Query(`
 		SELECT user_id FROM polls_members WHERE poll_id = $1
 	`, pollID)
@@ -163,7 +158,6 @@ func (s *Service) GetPoll(pollID, userId uuid.UUID) (*Poll, error) {
 }
 
 func (s *Service) DeletePoll(pollID uuid.UUID) error {
-	// Start a transaction to ensure all deletions succeed or fail together
 	tx, err := s.DB.Begin()
 	if err != nil {
 		return err
@@ -175,7 +169,6 @@ func (s *Service) DeletePoll(pollID uuid.UUID) error {
 		}
 	}()
 
-	// Delete poll_votes for poll options belonging to this poll
 	_, err = tx.Exec(`
 		DELETE FROM poll_votes WHERE option_id IN (
 			SELECT id FROM poll_options WHERE poll_id = $1
@@ -186,7 +179,6 @@ func (s *Service) DeletePoll(pollID uuid.UUID) error {
 		return err
 	}
 
-	// Delete poll_options for this poll
 	_, err = tx.Exec(`
 		DELETE FROM poll_options WHERE poll_id = $1
 	`, pollID)
@@ -195,7 +187,6 @@ func (s *Service) DeletePoll(pollID uuid.UUID) error {
 		return err
 	}
 
-	// Delete polls_members for this poll
 	_, err = tx.Exec(`
 		DELETE FROM polls_members WHERE poll_id = $1
 	`, pollID)
@@ -204,7 +195,6 @@ func (s *Service) DeletePoll(pollID uuid.UUID) error {
 		return err
 	}
 
-	// Finally, delete the poll itself
 	_, err = tx.Exec(`
 		DELETE FROM polls WHERE id = $1
 	`, pollID)
@@ -247,7 +237,6 @@ func (s *Service) JoinPoll(inviteCode string, userId uuid.UUID) (*Poll, error) {
 	return &poll, nil
 }
 
-// Add a restaurant option to the poll
 func (s *Service) AddOption(pollID uuid.UUID, restaurantID, name, imageURL, menuURL string) (*PollOption, error) {
 	id := uuid.New()
 
@@ -270,7 +259,6 @@ func (s *Service) AddOption(pollID uuid.UUID, restaurantID, name, imageURL, menu
 	}, nil
 }
 
-// Cast a vote for a given option by a user
 func (s *Service) CastVote(pollID, optionID, userID uuid.UUID) (*PollVote, error) {
 	id := uuid.New()
 
@@ -292,7 +280,6 @@ func (s *Service) CastVote(pollID, optionID, userID uuid.UUID) (*PollVote, error
 }
 
 func (s *Service) RemoveVote(pollID, optionID, userID uuid.UUID) error {
-	// Delete the vote if it exists
 	result, err := s.DB.Exec(`
 		DELETE FROM poll_votes WHERE poll_id = $1 AND option_id = $2 AND user_id = $3
 	`, pollID, optionID, userID)
@@ -312,7 +299,6 @@ func (s *Service) RemoveVote(pollID, optionID, userID uuid.UUID) error {
 	return nil
 }
 
-// Retrieve voting results for a poll
 func (s *Service) GetResults(pollID uuid.UUID) ([]PollResult, error) {
 	rows, err := s.DB.Query(`
 		SELECT o.id, o.name, COUNT(v.id) as votes
@@ -336,12 +322,10 @@ func (s *Service) GetResults(pollID uuid.UUID) ([]PollResult, error) {
 
 		voterIds := []uuid.UUID{}
 
-		// Scan option basic info
 		if err := rows.Scan(&optionID, &optionName, &voteCount); err != nil {
 			return nil, err
 		}
 
-		// Query voter ids for this option
 		voterRows, err := s.DB.Query(`
 			SELECT user_id FROM poll_votes WHERE option_id = $1
 		`, optionID)

@@ -18,7 +18,6 @@ func Init() {
 	Log.SetLevel(logrus.DebugLevel)
 }
 
-// Helper to sanitize sensitive data
 func sanitize(args ...interface{}) []interface{} {
 	safe := make([]interface{}, len(args))
 	for i, arg := range args {
@@ -46,8 +45,6 @@ func containsSensitive(s string) bool {
 func maskSensitive(s string) string {
 	return strings.ReplaceAll(s, "password", "******")
 }
-
-// Logging functions
 
 func Info(args ...interface{}) {
 	Log.Info(sanitize(args...)...)
@@ -86,7 +83,6 @@ func Debugf(format string, args ...interface{}) {
 }
 
 func WithFields(fields logrus.Fields) *logrus.Entry {
-	// Remove sensitive fields before logging
 	safeFields := logrus.Fields{}
 	for k, v := range fields {
 		if containsSensitive(k) {

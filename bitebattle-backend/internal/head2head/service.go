@@ -18,7 +18,6 @@ func NewService(db *sql.DB) *Service {
 	return &Service{DB: db, Matcher: NewMatcher(db)}
 }
 
-// CreateMatch creates a new head-to-head invite
 func (s *Service) CreateMatch(inviterID, inviteeID uuid.UUID, categories []string) (*Match, error) {
 	id := uuid.New()
 	now := time.Now()
@@ -43,9 +42,7 @@ func (s *Service) CreateMatch(inviterID, inviteeID uuid.UUID, categories []strin
 	}, nil
 }
 
-// AcceptMatch marks a match as active
 func (s *Service) AcceptMatch(matchID, userID uuid.UUID) error {
-	// Ensure the invitee is the one accepting
 	row := s.DB.QueryRow(`
 		SELECT invitee_id FROM head2head_matches WHERE id = $1 AND status = 'pending'
 	`, matchID)
@@ -65,7 +62,6 @@ func (s *Service) AcceptMatch(matchID, userID uuid.UUID) error {
 	return err
 }
 
-// SubmitSwipe records a user's swipe
 func (s *Service) SubmitSwipe(matchID, userID uuid.UUID, restaurantID, restaurantName string, liked bool) (*Swipe, error) {
 	id := uuid.New()
 	now := time.Now()
@@ -90,7 +86,6 @@ func (s *Service) SubmitSwipe(matchID, userID uuid.UUID, restaurantID, restauran
 	}, nil
 }
 
-// GetMutualLikes returns restaurants liked by both users
 func (s *Service) GetMutualLikes(matchID uuid.UUID) ([]Swipe, error) {
 	return s.Matcher.FindMutualLikes(matchID)
 }

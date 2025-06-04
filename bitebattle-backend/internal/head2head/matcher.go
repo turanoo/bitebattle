@@ -14,7 +14,6 @@ func NewMatcher(db *sql.DB) *Matcher {
 	return &Matcher{DB: db}
 }
 
-// FindMutualLikes returns restaurants liked by both users in a match.
 func (m *Matcher) FindMutualLikes(matchID uuid.UUID) ([]Swipe, error) {
 	rows, err := m.DB.Query(`
 		SELECT restaurant_id, restaurant_name

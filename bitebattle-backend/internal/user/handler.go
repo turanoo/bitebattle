@@ -19,7 +19,7 @@ func NewHandler(service *Service) *Handler {
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	users := rg.Group("/users")
 	users.GET(":id", h.GetUser)
-	users.GET("", h.GetUserByQuery) // Use query param for email
+	users.GET("", h.GetUserByQuery)
 }
 
 func (h *Handler) CreateUser(c *gin.Context) {
@@ -54,7 +54,6 @@ func (h *Handler) GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-// New handler for query param based email lookup
 func (h *Handler) GetUserByQuery(c *gin.Context) {
 	email := c.Query("email")
 	if email == "" {

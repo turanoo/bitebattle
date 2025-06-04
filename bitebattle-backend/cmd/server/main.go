@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	logger.Init() // <-- Initialize logger first!
+	logger.Init()
 
 	if err := godotenv.Load(); err != nil {
 		logger.Warn("No .env file found, using system env variables")
