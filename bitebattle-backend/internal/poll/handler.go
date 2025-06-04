@@ -26,6 +26,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	polls.POST(":pollId/join", h.JoinPollHandler)
 	polls.GET(":pollId", h.GetPollHandler)
 	polls.DELETE(":pollId", h.DeletePollHandler)
+	polls.PUT(":pollId", h.UpdatePollHandler)
 	polls.POST(":pollId/options", h.AddOptionHandler)
 	polls.POST(":pollId/vote", h.CastVoteHandler)
 	polls.POST(":pollId/unvote", h.UncastVoteHandler)
@@ -128,6 +129,30 @@ func (h *Handler) DeletePollHandler(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+func (h *Handler) UpdatePollHandler(c *gin.Context) {
+	pollID, err := uuid.Parse(c.Param("pollId"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid poll ID"})
+		return
+	}
+
+	var req struct {
+		Name string `json:"name"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil || req.Name == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "name is required in body"})
+		return
+	}
+
+	poll, err := h.Service.UpdatePoll(pollID, req.Name)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update poll"})
+		return
+	}
+
+	c.JSON(http.StatusOK, poll)
 }
 
 func (h *Handler) JoinPollHandler(c *gin.Context) {

@@ -49,18 +49,23 @@ final class APIClient {
             completion(.failure(APIError.notLoggedIn)); return
         }
         URLSession.shared.dataTask(with: request) { data, _, error in
-            if let error = error { completion(.failure(error)); return }
-            guard let data = data else { completion(.failure(APIError.noData)); return }
-            do {
-                let poll = try JSONDecoder().decode(Poll.self, from: data)
-                completion(.success(poll))
-            } catch { completion(.failure(error)) }
+            DispatchQueue.main.async { // Ensure UI state changes are on main thread
+                if let error = error { completion(.failure(error)); return }
+                guard let data = data else { completion(.failure(APIError.noData)); return }
+                do {
+                    let poll = try JSONDecoder().decode(Poll.self, from: data)
+                    completion(.success(poll))
+                } catch { completion(.failure(error)) }
+            }
         }.resume()
     }
 
     // Updated joinPoll to use pollId and inviteCode in body
+    // Make sure to import or define the Poll model at the top if needed:
+    // import YourModelModule
+
     func joinPoll(pollId: String, inviteCode: String, completion: @escaping (Result<Poll, Error>) -> Void) {
-        guard let url = URL(string: Endpoints.joinPoll(pollId)),
+        guard let url = URL(string: Endpoints.joinPoll(pollId: pollId)),
               let body = try? JSONSerialization.data(withJSONObject: ["invite_code": inviteCode]),
               let request = makeRequest(url: url, method: "POST", body: body, contentType: "application/json") else {
             completion(.failure(APIError.notLoggedIn)); return
@@ -112,6 +117,29 @@ final class APIClient {
                 let restaurants = try JSONDecoder().decode([Restaurant].self, from: data)
                 completion(.success(restaurants))
             } catch { completion(.failure(error)) }
+        }.resume()
+    }
+
+    func updatePoll(pollId: String, name: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        guard let url = URL(string: Endpoints.updatePoll(pollId)),
+              let body = try? JSONSerialization.data(withJSONObject: ["name": name]),
+              let request = makeRequest(url: url, method: "PUT", body: body, contentType: "application/json") else {
+            completion(.failure(APIError.notLoggedIn)); return
+        }
+        URLSession.shared.dataTask(with: request) { _, response, error in
+            if let error = error { completion(.failure(error)); return }
+            completion(.success(()))
+        }.resume()
+    }
+
+    func deletePoll(pollId: String, completion: @escaping (Result<Void, Error>) -> Void) {
+        guard let url = URL(string: Endpoints.deletePoll(pollId)),
+              let request = makeRequest(url: url, method: "DELETE") else {
+            completion(.failure(APIError.notLoggedIn)); return
+        }
+        URLSession.shared.dataTask(with: request) { _, response, error in
+            if let error = error { completion(.failure(error)); return }
+            completion(.success(()))
         }.resume()
     }
 

@@ -25,7 +25,7 @@ struct PollDetailView: View {
     }
 
     private var headerView: some View {
-        Text(poll.name)
+        Text(poll.name ?? "Untitled Poll")
             .font(.largeTitle)
             .fontWeight(.bold)
             .foregroundColor(AppColors.textOnPrimary)
@@ -113,36 +113,28 @@ struct PollDetailView: View {
 
     private func fetchResults() {
         guard let token = UserDefaults.standard.string(forKey: "authToken"),
-              !token.isEmpty,
-              let url = URL(string: "http://localhost:8080/api/polls/\(poll.id)/results") else {
-            statusMessage = "Not logged in."
-            return
-        }
-
+              let url = URL(string: Endpoints.pollResults(poll.id)) else { return }
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-
         isLoading = true
         statusMessage = nil
         results = []
-
         URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
                 isLoading = false
                 if let error = error {
-                    statusMessage = "Failed: \(error.localizedDescription)"
+                    statusMessage = error.localizedDescription
                     return
                 }
                 guard let data = data else {
-                    statusMessage = "No data returned."
+                    statusMessage = "No data received."
                     return
                 }
                 do {
-                    let decoded = try JSONDecoder().decode([PollOptionResult].self, from: data)
-                    self.results = decoded
+                    results = try JSONDecoder().decode([PollOptionResult].self, from: data)
                 } catch {
-                    statusMessage = "Failed to load results"
+                    statusMessage = error.localizedDescription
                 }
             }
         }.resume()

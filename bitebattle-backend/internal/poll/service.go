@@ -3,6 +3,8 @@ package poll
 import (
 	"database/sql"
 	"errors"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -204,6 +206,32 @@ func (s *Service) DeletePoll(pollID uuid.UUID) error {
 	}
 
 	return tx.Commit()
+}
+
+func (s *Service) UpdatePoll(pollID uuid.UUID, name string) (*Poll, error) {
+	setClauses := []string{}
+	args := []interface{}{}
+	argIdx := 1
+
+	if name != "" {
+		setClauses = append(setClauses, "name = $"+strconv.Itoa(argIdx))
+		args = append(args, name)
+		argIdx++
+	}
+
+	if len(setClauses) == 0 {
+		return nil, errors.New("no fields provided for updating poll")
+	}
+
+	query := "UPDATE polls SET " + strings.Join(setClauses, ", ") + ", updated_at = NOW() WHERE id = $" + strconv.Itoa(argIdx)
+	args = append(args, pollID)
+
+	_, err := s.DB.Exec(query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.GetPoll(pollID, uuid.Nil) // Return updated poll without user context
 }
 
 func (s *Service) JoinPoll(inviteCode string, userId uuid.UUID) (*Poll, error) {

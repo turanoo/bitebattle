@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreLocation
+import Foundation
 
 struct PollOptionView: View {
     let poll: Poll
@@ -15,20 +16,6 @@ struct PollOptionView: View {
 
     // Example categories
     let categories = ["Pizza", "Sushi", "Italian", "Ramen", "Burgers", "Mexican", "Chinese", "Indian", "Thai"]
-
-    struct Restaurant: Identifiable, Decodable {
-        let place_id: String
-        let name: String
-        let address: String?
-        let rating: Double?
-        let photos: [Photo]?
-
-        struct Photo: Decodable {
-            let photo_reference: String
-        }
-
-        var id: String { place_id }
-    }
 
     var body: some View {
         ZStack {
@@ -208,37 +195,19 @@ struct PollOptionView: View {
     }
 
     func fetchRestaurants(category: String, location: String) {
-        guard let token = UserDefaults.standard.string(forKey: "authToken"),
-              !token.isEmpty,
-              let url = URL(string: "http://localhost:8080/api/restaurants/search?q=\(category.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&location=\(location.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")") else {
-            statusMessage = "Not logged in."
-            isSearching = false
-            return
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        isSearching = true
+        statusMessage = nil
+        APIClient.shared.searchRestaurants(category: category, location: location) { result in
             DispatchQueue.main.async {
                 isSearching = false
-                if let error = error {
-                    statusMessage = "Failed: \(error.localizedDescription)"
-                    return
-                }
-                guard let data = data else {
-                    statusMessage = "No data returned."
-                    return
-                }
-                do {
-                    let decoded = try JSONDecoder().decode([Restaurant].self, from: data)
-                    self.searchResults = decoded
-                } catch {
-                    statusMessage = "Failed to load restaurants."
+                switch result {
+                case .success(let restaurants):
+                    searchResults = restaurants
+                case .failure(let error):
+                    statusMessage = error.localizedDescription
                 }
             }
-        }.resume()
+        }
     }
 
     func toggleSelection(for placeId: String) {
