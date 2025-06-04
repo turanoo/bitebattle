@@ -2,9 +2,9 @@ package auth
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/utils"
 )
 
 const userIDContextKey = "userID"
@@ -13,20 +13,22 @@ func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "authorization header missing"})
+			utils.ErrorResponse(c, http.StatusUnauthorized, "authorization header missing")
+			c.Abort()
 			return
 		}
 
-		tokenParts := strings.Split(authHeader, "Bearer ")
-		if len(tokenParts) != 2 {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization header format"})
+		tokenStr, err := utils.ExtractBearerToken(authHeader)
+		if err != nil {
+			utils.ErrorResponse(c, http.StatusUnauthorized, "invalid authorization header format")
+			c.Abort()
 			return
 		}
 
-		tokenStr := tokenParts[1]
 		claims, err := ValidateToken(tokenStr)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired token"})
+			utils.ErrorResponse(c, http.StatusUnauthorized, "invalid or expired token")
+			c.Abort()
 			return
 		}
 

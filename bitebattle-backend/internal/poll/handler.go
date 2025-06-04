@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/turanoo/bitebattle/bitebattle-backend/internal/auth"
 	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/logger"
+	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/utils"
 )
 
 type Handler struct {
@@ -68,16 +69,17 @@ func (h *Handler) CreatePollHandler(c *gin.Context) {
 }
 
 func (h *Handler) GetPollsHandler(c *gin.Context) {
-	userIDStr := c.MustGet("userID").(string)
-	userID, err := uuid.Parse(userIDStr)
+	userID, err := utils.UserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		logger.Warnf("Invalid user id in GetPollsHandler: %v", err)
+		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
 	}
 
 	polls, err := h.Service.GetPolls(userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch polls"})
+		logger.Errorf("Failed to fetch polls for user %s: %v", userID, err)
+		utils.ErrorResponse(c, http.StatusInternalServerError, "failed to fetch polls")
 		return
 	}
 

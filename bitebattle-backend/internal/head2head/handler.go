@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/turanoo/bitebattle/bitebattle-backend/internal/auth"
 	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/logger"
+	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/utils"
 )
 
 type Handler struct {
@@ -35,28 +36,27 @@ func (h *Handler) CreateMatchHandler(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.Warnf("Invalid request in CreateMatchHandler: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		utils.ErrorResponse(c, http.StatusBadRequest, "invalid request")
 		return
 	}
 
-	userId := c.MustGet("userID").(string)
-	inviterID, err := uuid.Parse(userId)
+	inviterID, err := utils.UserIDFromContext(c)
 	if err != nil {
 		logger.Warnf("Invalid inviter ID in CreateMatchHandler: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid inviter ID"})
+		utils.ErrorResponse(c, http.StatusBadRequest, "invalid inviter ID")
 		return
 	}
 	inviteeID, err := uuid.Parse(req.InviteeID)
 	if err != nil {
 		logger.Warnf("Invalid invitee ID in CreateMatchHandler: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid invitee ID"})
+		utils.ErrorResponse(c, http.StatusBadRequest, "invalid invitee ID")
 		return
 	}
 
 	match, err := h.Service.CreateMatch(inviterID, inviteeID, req.Categories)
 	if err != nil {
 		logger.Errorf("Could not create match: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create match"})
+		utils.ErrorResponse(c, http.StatusInternalServerError, "could not create match")
 		return
 	}
 
@@ -67,14 +67,19 @@ func (h *Handler) CreateMatchHandler(c *gin.Context) {
 func (h *Handler) AcceptMatchHandler(c *gin.Context) {
 	matchID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid match ID"})
+		utils.ErrorResponse(c, http.StatusBadRequest, "invalid match ID")
 		return
 	}
 
-	userID := c.MustGet("userID").(uuid.UUID)
+	userID, err := utils.UserIDFromContext(c)
+	if err != nil {
+		logger.Warnf("Invalid user id in AcceptMatchHandler: %v", err)
+		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
+		return
+	}
 
 	if err := h.Service.AcceptMatch(matchID, userID); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "could not accept match"})
+		utils.ErrorResponse(c, http.StatusBadRequest, "could not accept match")
 		return
 	}
 
@@ -84,11 +89,16 @@ func (h *Handler) AcceptMatchHandler(c *gin.Context) {
 func (h *Handler) SubmitSwipeHandler(c *gin.Context) {
 	matchID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid match ID"})
+		utils.ErrorResponse(c, http.StatusBadRequest, "invalid match ID")
 		return
 	}
 
-	userID := c.MustGet("userID").(uuid.UUID)
+	userID, err := utils.UserIDFromContext(c)
+	if err != nil {
+		logger.Warnf("Invalid user id in SubmitSwipeHandler: %v", err)
+		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
+		return
+	}
 
 	var req struct {
 		RestaurantID   string `json:"restaurant_id"`
@@ -97,13 +107,13 @@ func (h *Handler) SubmitSwipeHandler(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		utils.ErrorResponse(c, http.StatusBadRequest, "invalid request")
 		return
 	}
 
 	swipe, err := h.Service.SubmitSwipe(matchID, userID, req.RestaurantID, req.RestaurantName, req.Liked)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to record swipe"})
+		utils.ErrorResponse(c, http.StatusInternalServerError, "failed to record swipe")
 		return
 	}
 
@@ -113,13 +123,13 @@ func (h *Handler) SubmitSwipeHandler(c *gin.Context) {
 func (h *Handler) GetMatchResultsHandler(c *gin.Context) {
 	matchID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid match ID"})
+		utils.ErrorResponse(c, http.StatusBadRequest, "invalid match ID")
 		return
 	}
 
 	matches, err := h.Service.GetMutualLikes(matchID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch match results"})
+		utils.ErrorResponse(c, http.StatusInternalServerError, "failed to fetch match results")
 		return
 	}
 
