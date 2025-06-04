@@ -1,137 +1,117 @@
 import SwiftUI
 
 struct PollDetailView: View {
-    let poll: PollsView.Poll
+    let poll: Poll
 
     @State private var results: [PollOptionResult] = []
     @State private var isLoading: Bool = false
     @State private var statusMessage: String?
     @State private var showAddOption: Bool = false
 
-    struct PollOptionResult: Identifiable, Decodable {
-        let option_id: String
-        let option_name: String
-        let vote_count: Int
-        let voter_ids: [String]
-
-        var id: String { option_id }
-
-        private enum CodingKeys: String, CodingKey {
-            case option_id, option_name, vote_count, voter_ids
-        }
-
-        init(from decoder: Decoder) throws {
-            let container = try decoder.container(keyedBy: CodingKeys.self)
-            option_id = try container.decode(String.self, forKey: .option_id)
-            option_name = try container.decode(String.self, forKey: .option_name)
-            vote_count = try container.decode(Int.self, forKey: .vote_count)
-            voter_ids = try container.decodeIfPresent([String].self, forKey: .voter_ids) ?? []
+    var body: some View {
+        AppBackground {
+            VStack(spacing: 24) {
+                headerView
+                statusOrProgressView
+                optionsListView
+                Spacer()
+                addButton
+            }
+            .padding()
+            .navigationTitle("Poll Detail")
+            .navigationBarTitleDisplayMode(.inline)
+            .onAppear(perform: fetchResults)
         }
     }
 
-    var body: some View {
-        ZStack {
-            LinearGradient(
-                gradient: Gradient(colors: [Color.orange.opacity(0.7), Color.pink.opacity(0.7)]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+    private var headerView: some View {
+        Text(poll.name)
+            .font(.largeTitle)
+            .fontWeight(.bold)
+            .foregroundColor(AppColors.textOnPrimary)
+            .shadow(radius: 2)
+            .padding(.top, 24)
+    }
 
-            VStack(spacing: 24) {
-                Text(poll.name)
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                    .shadow(radius: 4)
-                    .padding(.top, 24)
+    private var statusOrProgressView: some View {
+        Group {
+            if isLoading {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: AppColors.primary))
+                    .padding()
+            } else if let status = statusMessage {
+                Text(status)
+                    .foregroundColor(AppColors.textOnPrimary)
+                    .font(.footnote)
+                    .padding(.top, 8)
+                    .shadow(radius: 1)
+            } else if results.isEmpty {
+                Text("No options yet.")
+                    .foregroundColor(AppColors.textOnPrimary)
+                    .font(.headline)
+                    .padding()
+                    .shadow(radius: 1)
+            }
+        }
+    }
 
-                if isLoading {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        .padding()
-                } else if let status = statusMessage {
-                    Text(status)
-                        .foregroundColor(.white)
-                        .font(.footnote)
-                        .padding(.top, 8)
-                        .shadow(radius: 1)
-                } else if results.isEmpty {
-                    Text("No options yet.")
-                        .foregroundColor(.white)
-                        .font(.headline)
-                        .padding()
-                        .shadow(radius: 1)
-                }
-
-                ScrollView {
-                    VStack(spacing: 18) {
-                        ForEach(results) { option in
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Text(option.option_name)
-                                        .font(.headline)
-                                        .foregroundColor(.orange)
-                                    Spacer()
-                                    Text("Votes: \(option.vote_count)")
-                                        .font(.subheadline)
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 2)
-                                        .background(Color.orange.opacity(0.7))
-                                        .cornerRadius(8)
-                                }
-                                if !option.voter_ids.isEmpty {
-                                    Text("Voters: \(option.voter_ids.joined(separator: ", "))")
-                                        .font(.caption)
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(Color.pink.opacity(0.5))
-                                        .cornerRadius(6)
-                                }
+    private var optionsListView: some View {
+        ScrollView {
+            VStack(spacing: 18) {
+                ForEach(results) { option in
+                    AppTile {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text(option.option_name)
+                                    .font(.headline)
+                                    .foregroundColor(AppColors.secondary)
+                                Spacer()
+                                Text("Votes: \(option.vote_count)")
+                                    .font(.subheadline)
+                                    .foregroundColor(AppColors.textOnPrimary)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 2)
+                                    .background(AppColors.secondary.opacity(0.7))
+                                    .cornerRadius(8)
                             }
-                            .padding()
-                            .background(Color.white.opacity(0.15))
-                            .cornerRadius(14)
-                            .shadow(radius: 2)
+                            if !option.voter_ids.isEmpty {
+                                Text("Voters: \(option.voter_ids.joined(separator: ", "))")
+                                    .font(.caption)
+                                    .foregroundColor(AppColors.textOnPrimary)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(AppColors.primary.opacity(0.5))
+                                    .cornerRadius(6)
+                            }
                         }
                     }
-                    .padding(.horizontal, 12)
-                }
-
-                Spacer()
-
-                Button(action: {
-                    showAddOption = true
-                }) {
-                    HStack {
-                        Image(systemName: "plus.circle.fill")
-                            .foregroundColor(.white)
-                        Text("Add Option")
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 48)
-                    .padding()
-                    .background(Color.pink.opacity(0.8))
-                    .cornerRadius(14)
-                    .shadow(radius: 2)
-                }
-                .padding(.horizontal, 12)
-                .padding(.bottom, 24)
-                .sheet(isPresented: $showAddOption, onDismiss: fetchResults) {
-                    PollOptionView(poll: poll)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
-            .padding(.top)
+            .padding(.horizontal, 12)
+            .animation(.easeInOut(duration: 0.18), value: results)
         }
-        .navigationTitle("Poll Details")
-        .navigationBarTitleDisplayMode(.inline)
-        .onAppear(perform: fetchResults)
     }
 
-    func fetchResults() {
+    private var addButton: some View {
+        AppButton(
+            title: "Add Option",
+            icon: "plus.circle.fill",
+            background: AppColors.primary,
+            foreground: AppColors.textOnPrimary,
+            isLoading: false,
+            isDisabled: false
+        ) {
+            showAddOption = true
+        }
+        .padding(.horizontal, 12)
+        .padding(.bottom, 24)
+        .sheet(isPresented: $showAddOption, onDismiss: fetchResults) {
+            PollOptionView(poll: poll)
+        }
+    }
+
+    private func fetchResults() {
         guard let token = UserDefaults.standard.string(forKey: "authToken"),
               !token.isEmpty,
               let url = URL(string: "http://localhost:8080/api/polls/\(poll.id)/results") else {
@@ -166,5 +146,15 @@ struct PollDetailView: View {
                 }
             }
         }.resume()
+    }
+}
+
+// Conform PollOptionResult to Equatable for animation
+extension PollOptionResult: Equatable {
+    static func == (lhs: PollOptionResult, rhs: PollOptionResult) -> Bool {
+        lhs.option_id == rhs.option_id &&
+        lhs.option_name == rhs.option_name &&
+        lhs.vote_count == rhs.vote_count &&
+        lhs.voter_ids == rhs.voter_ids
     }
 }

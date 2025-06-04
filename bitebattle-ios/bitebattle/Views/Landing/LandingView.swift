@@ -2,55 +2,31 @@ import SwiftUI
 
 struct LandingView: View {
     var body: some View {
-        NavigationView {
-            ZStack {
-                // Background gradient
-                LinearGradient(
-                    gradient: Gradient(colors: [Color.pink.opacity(0.7), Color.orange.opacity(0.7)]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
-
+        AppBackground {
+            AppGradientBackground {
                 VStack(spacing: 32) {
                     Spacer()
-                    
                     // Logo placeholder
                     Image(systemName: "fork.knife.circle.fill")
                         .resizable()
                         .scaledToFit()
                         .frame(width: 100, height: 100)
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColors.textOnPrimary)
                         .shadow(radius: 10)
 
                     Text("Welcome to BiteBattle")
                         .font(.largeTitle)
                         .fontWeight(.bold)
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColors.textOnPrimary)
                         .multilineTextAlignment(.center)
                         .shadow(radius: 4)
 
                     VStack(spacing: 16) {
                         NavigationLink(destination: RegisterView()) {
-                            Text("Register")
-                                .fontWeight(.semibold)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.white.opacity(0.9))
-                                .foregroundColor(.pink)
-                                .cornerRadius(12)
-                                .shadow(radius: 2)
+                            AppButton(title: "Register", icon: nil, background: AppColors.surface.opacity(0.9), foreground: AppColors.orange, isLoading: false, isDisabled: false) {}
                         }
-
                         NavigationLink(destination: LoginView()) {
-                            Text("Login")
-                                .fontWeight(.semibold)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.pink.opacity(0.8))
-                                .foregroundColor(.white)
-                                .cornerRadius(12)
-                                .shadow(radius: 2)
+                            AppButton(title: "Login", icon: nil, background: AppColors.orange.opacity(0.8), foreground: AppColors.textOnPrimary, isLoading: false, isDisabled: false) {}
                         }
                     }
                     .padding(.horizontal, 24)
@@ -59,6 +35,8 @@ struct LandingView: View {
                 }
                 .padding()
             }
+            .navigationTitle("Welcome")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }

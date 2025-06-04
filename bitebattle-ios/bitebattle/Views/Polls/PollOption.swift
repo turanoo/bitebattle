@@ -2,7 +2,7 @@ import SwiftUI
 import CoreLocation
 
 struct PollOptionView: View {
-    let poll: PollsView.Poll
+    let poll: Poll
     @Environment(\.presentationMode) var presentationMode
 
     @State private var zipCode: String = ""
@@ -258,11 +258,11 @@ struct PollOptionView: View {
 
         // Prepare the array payload
         let payload: [[String: Any]] = selected.map { restaurant in
-            let imageUrl = restaurant.photos?.first.map { photoURL($0.photo_reference)?.absoluteString } ?? ""
+            let imageUrl = restaurant.photos?.first.flatMap { photoURL($0.photo_reference)?.absoluteString } ?? ""
             return [
                 "restaurant_id": restaurant.place_id,
                 "name": restaurant.name,
-                "image_url": imageUrl,
+                "image_url": imageUrl as String,
                 "menu_url": "" // You can add menu URL if available
             ]
         }

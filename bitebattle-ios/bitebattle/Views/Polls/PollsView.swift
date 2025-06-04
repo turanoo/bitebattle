@@ -1,4 +1,6 @@
+import Foundation
 import SwiftUI
+
 
 struct PollsView: View {
     @State private var polls: [Poll] = []
@@ -7,388 +9,349 @@ struct PollsView: View {
     @State private var showAddPoll: Bool = false
     @State private var newPollName: String = ""
     @State private var isCreatingPoll: Bool = false
-
-    // Join Poll states
     @State private var showJoinPoll: Bool = false
     @State private var inviteCode: String = ""
     @State private var isJoiningPoll: Bool = false
 
-    struct Poll: Identifiable, Decodable {
-        let id: String
-        let name: String
-        let invite_code: String?
-        let role: String
-        let members: [String]
-        let created_by: String
-        let created_at: String
-        let updated_at: String
-    }
-
     var body: some View {
-        ZStack {
-            LinearGradient(
-                gradient: Gradient(colors: [Color.pink.opacity(0.7), Color.orange.opacity(0.7)]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-
-            VStack(spacing: 24) {
-                Spacer()
-
-                Image(systemName: "fork.knife.circle.fill")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 80, height: 80)
-                    .foregroundColor(.white)
-                    .shadow(radius: 10)
-
-                Text("Your Polls")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                    .shadow(radius: 4)
-
-                if isLoading {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        .padding()
-                } else if let status = statusMessage {
-                    Text(status)
-                        .foregroundColor(.white)
-                        .font(.footnote)
-                        .padding(.top, 8)
-                        .shadow(radius: 1)
-                } else if polls.isEmpty {
-                    Text("No polls found.")
-                        .foregroundColor(.white)
-                        .font(.headline)
-                        .padding()
-                        .shadow(radius: 1)
-                }
-
+        AppBackground {
+            VStack(spacing: 20) {
+                TitleText(title: "Your Polls")
+                StatusOrLoadingView(
+                    isLoading: isLoading,
+                    statusMessage: statusMessage,
+                    isEmpty: polls.isEmpty,
+                    emptyText: "No polls yet. Create or join one!"
+                )
                 ScrollView {
-                    VStack(spacing: 18) {
-                        ForEach(polls) { poll in
+                    VStack(spacing: 12) {
+                        ForEach(Array(polls.enumerated()), id: \.element.id) { index, poll in
                             NavigationLink(destination: PollDetailView(poll: poll)) {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    HStack {
-                                        Text(poll.name)
-                                            .font(.headline)
-                                            .foregroundColor(.pink)
-                                        Spacer()
-                                        Text(poll.role.capitalized)
-                                            .font(.caption)
-                                            .foregroundColor(.white)
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 2)
-                                            .background(poll.role == "owner" ? Color.pink.opacity(0.7) : Color.gray.opacity(0.5))
-                                            .cornerRadius(8)
-                                    }
-                                    if poll.role == "owner", let code = poll.invite_code {
-                                        HStack {
-                                            Image(systemName: "person.2.fill")
-                                                .foregroundColor(.orange)
-                                            Text("Invite Code: ")
-                                                .font(.subheadline)
-                                                .foregroundColor(.white)
-                                            Text(code)
-                                                .font(.system(.subheadline, design: .monospaced))
-                                                .foregroundColor(.white)
-                                                .padding(.horizontal, 6)
-                                                .background(Color.pink.opacity(0.5))
-                                                .cornerRadius(6)
-                                        }
-                                    }
-                                }
-                                .padding()
-                                .background(Color.white.opacity(0.15))
-                                .cornerRadius(14)
-                                .shadow(radius: 3)
+                                PollTile(poll: poll, colorIndex: index)
                             }
                         }
-
-                        // Add Poll & Join Poll Tile
-                        VStack(alignment: .leading, spacing: 8) {
-                            if showAddPoll {
-                                TextField("Poll Name", text: $newPollName)
-                                    .padding()
-                                    .background(Color.white.opacity(0.9))
-                                    .cornerRadius(10)
-                                    .autocapitalization(.words)
-                                    .disableAutocorrection(true)
-                                    .shadow(radius: 1)
-
-                                Button(action: {
-                                    createPoll()
-                                }) {
-                                    if isCreatingPoll {
-                                        ProgressView()
-                                            .progressViewStyle(CircularProgressViewStyle(tint: .pink))
-                                            .frame(maxWidth: .infinity)
-                                            .padding()
-                                            .background(Color.pink.opacity(0.8))
-                                            .foregroundColor(.white)
-                                            .cornerRadius(12)
-                                            .shadow(radius: 2)
-                                    } else {
-                                        Text("Create Poll")
-                                            .fontWeight(.semibold)
-                                            .frame(maxWidth: .infinity)
-                                            .padding()
-                                            .background(newPollName.isEmpty ? Color.gray.opacity(0.5) : Color.pink.opacity(0.8))
-                                            .foregroundColor(.white)
-                                            .cornerRadius(12)
-                                            .shadow(radius: 2)
-                                    }
-                                }
-                                .disabled(isCreatingPoll || newPollName.isEmpty)
-
-                                Button(action: {
-                                    showAddPoll = false
-                                    newPollName = ""
-                                }) {
-                                    Text("Cancel")
-                                        .foregroundColor(.pink)
-                                        .padding(.top, 4)
-                                }
-                            } else if showJoinPoll {
-                                TextField("Invite Code", text: $inviteCode)
-                                    .padding()
-                                    .background(Color.white.opacity(0.9))
-                                    .cornerRadius(10)
-                                    .autocapitalization(.allCharacters)
-                                    .disableAutocorrection(true)
-                                    .shadow(radius: 1)
-
-                                Button(action: {
-                                    joinPoll()
-                                }) {
-                                    if isJoiningPoll {
-                                        ProgressView()
-                                            .progressViewStyle(CircularProgressViewStyle(tint: .orange))
-                                            .frame(maxWidth: .infinity)
-                                            .padding()
-                                            .background(Color.orange.opacity(0.8))
-                                            .foregroundColor(.white)
-                                            .cornerRadius(12)
-                                            .shadow(radius: 2)
-                                    } else {
-                                        Text("Join Poll")
-                                            .fontWeight(.semibold)
-                                            .frame(maxWidth: .infinity)
-                                            .padding()
-                                            .background(inviteCode.isEmpty ? Color.gray.opacity(0.5) : Color.orange.opacity(0.8))
-                                            .foregroundColor(.white)
-                                            .cornerRadius(12)
-                                            .shadow(radius: 2)
-                                    }
-                                }
-                                .disabled(isJoiningPoll || inviteCode.isEmpty)
-
-                                Button(action: {
-                                    showJoinPoll = false
-                                    inviteCode = ""
-                                }) {
-                                    Text("Cancel")
-                                        .foregroundColor(.orange)
-                                        .padding(.top, 4)
-                                }
-                            } else {
-                                HStack(spacing: 12) {
-                                    Button(action: {
-                                        showAddPoll = true
-                                    }) {
-                                        HStack {
-                                            Image(systemName: "plus.circle.fill")
-                                                .foregroundColor(.white)
-                                            Text("Add Poll")
-                                                .fontWeight(.semibold)
-                                                .foregroundColor(.white)
-                                        }
-                                        .frame(maxWidth: .infinity, minHeight: 48)
-                                        .padding()
-                                        .background(Color.pink.opacity(0.7))
-                                        .cornerRadius(14)
-                                        .shadow(radius: 2)
-                                    }
-                                    Button(action: {
-                                        showJoinPoll = true
-                                    }) {
-                                        HStack {
-                                            Image(systemName: "person.2.circle.fill")
-                                                .foregroundColor(.white)
-                                            Text("Join Poll")
-                                                .fontWeight(.semibold)
-                                                .foregroundColor(.white)
-                                        }
-                                        .frame(maxWidth: .infinity, minHeight: 48)
-                                        .padding()
-                                        .background(Color.orange.opacity(0.7))
-                                        .cornerRadius(14)
-                                        .shadow(radius: 2)
-                                    }
-                                }
-                            }
-                        }
-                        .padding()
-                        .background(Color.white.opacity(0.10))
-                        .cornerRadius(14)
-                        .shadow(radius: 2)
                     }
-                    .padding(.horizontal, 12)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 8)
                 }
-
-                Spacer()
+                PollActionButtons(
+                    showAddPoll: $showAddPoll,
+                    showJoinPoll: $showJoinPoll,
+                    newPollName: $newPollName,
+                    isCreatingPoll: $isCreatingPoll,
+                    createPoll: createPoll,
+                    inviteCode: $inviteCode,
+                    isJoiningPoll: $isJoiningPoll,
+                    joinPoll: joinPoll
+                )
+                .frame(maxWidth: .infinity, alignment: .center)
             }
             .padding()
-        }
-        .navigationTitle("BiteBattle")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                NavigationLink(destination: AccountView()) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "person.crop.circle.fill")
-                            .font(.title2)
-                            .foregroundColor(.white)
-                        Text("Account")
-                            .foregroundColor(.white)
-                            .fontWeight(.semibold)
-                    }
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 10)
-                    .background(Color.pink.opacity(0.7))
-                    .cornerRadius(10)
-                    .shadow(radius: 2)
+            .navigationTitle("BiteBattle")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    AccountButton()
                 }
             }
+            .onAppear(perform: fetchPolls)
         }
-        .onAppear(perform: fetchPolls)
+        .sheet(isPresented: $showAddPoll) {
+            AppBackground {
+                VStack(spacing: 16) {
+                    Text("New Poll Name")
+                        .font(.headline)
+                        .foregroundColor(AppColors.textPrimary)
+                    AppTextField(placeholder: "Poll Name", text: $newPollName)
+                    AppButton(
+                        title: isCreatingPoll ? "Creating..." : "Create",
+                        isLoading: isCreatingPoll,
+                        isDisabled: newPollName.isEmpty,
+                        action: createPoll
+                    )
+                    Button("Cancel") { showAddPoll = false }
+                        .foregroundColor(.red)
+                }
+                .padding()
+            }
+            .interactiveDismissDisabled(isCreatingPoll)
+        }
+        .sheet(isPresented: $showJoinPoll) {
+            AppBackground {
+                VStack(spacing: 16) {
+                    Text("Enter Invite Code")
+                        .font(.headline)
+                        .foregroundColor(AppColors.textPrimary)
+                    AppTextField(placeholder: "Invite Code", text: $inviteCode)
+                    AppButton(
+                        title: isJoiningPoll ? "Joining..." : "Join",
+                        isLoading: isJoiningPoll,
+                        isDisabled: inviteCode.isEmpty,
+                        action: joinPoll
+                    )
+                    Button("Cancel") { showJoinPoll = false }
+                        .foregroundColor(.red)
+                }
+                .padding()
+            }
+            .interactiveDismissDisabled(isJoiningPoll)
+        }
     }
 
     func fetchPolls() {
-        guard let token = UserDefaults.standard.string(forKey: "authToken"),
-              !token.isEmpty,
-              let url = URL(string: "http://localhost:8080/api/polls") else {
-            statusMessage = "Not logged in."
-            return
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-
         isLoading = true
-        statusMessage = nil
-        polls = []
-
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        APIClient.shared.fetchPolls { result in
             DispatchQueue.main.async {
                 isLoading = false
-                if let error = error {
-                    statusMessage = "Failed: \(error.localizedDescription)"
-                    return
-                }
-                guard let data = data else {
-                    statusMessage = "No data returned."
-                    return
-                }
-                do {
-                    let decoded = try JSONDecoder().decode([Poll].self, from: data)
-                    self.polls = decoded
-                } catch {
-                    statusMessage = "Failed to load polls."
+                switch result {
+                case .success(let polls):
+                    self.polls = polls.sorted { $0.updated_at > $1.updated_at }
+                    self.statusMessage = nil
+                case .failure(let error):
+                    self.statusMessage = error.localizedDescription
                 }
             }
-        }.resume()
+        }
     }
 
     func createPoll() {
-        guard let token = UserDefaults.standard.string(forKey: "authToken"),
-              !token.isEmpty,
-              let url = URL(string: "http://localhost:8080/api/polls") else {
-            statusMessage = "Not logged in."
-            return
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        let payload: [String: String] = [
-            "name": newPollName
-        ]
-
-        guard let httpBody = try? JSONSerialization.data(withJSONObject: payload) else {
-            statusMessage = "Failed to encode data."
-            return
-        }
-        request.httpBody = httpBody
-
+        guard !newPollName.isEmpty else { return }
         isCreatingPoll = true
-        statusMessage = nil
-
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        APIClient.shared.createPoll(name: newPollName) { result in
             DispatchQueue.main.async {
                 isCreatingPoll = false
-                if let error = error {
-                    statusMessage = "Failed: \(error.localizedDescription)"
-                    return
-                }
-                guard let data = data else {
-                    statusMessage = "No data returned."
-                    return
-                }
-                do {
-                    let newPoll = try JSONDecoder().decode(Poll.self, from: data)
-                    self.polls.insert(newPoll, at: 0)
-                    self.newPollName = ""
-                    self.showAddPoll = false
-                } catch {
-                    statusMessage = "Failed to create poll."
+                switch result {
+                case .success(_):
+                    newPollName = ""
+                    // Dismiss the sheet, then fetch polls
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        showAddPoll = false
+                        fetchPolls()
+                    }
+                case .failure(let error):
+                    statusMessage = error.localizedDescription
                 }
             }
-        }.resume()
+        }
     }
 
     func joinPoll() {
-        guard let token = UserDefaults.standard.string(forKey: "authToken"),
-              !token.isEmpty,
-              !inviteCode.isEmpty,
-              let url = URL(string: "http://localhost:8080/api/polls/join/\(inviteCode)") else {
-            statusMessage = "Not logged in or invite code missing."
-            return
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-
+        guard !inviteCode.isEmpty else { return }
         isJoiningPoll = true
-        statusMessage = nil
-
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        APIClient.shared.joinPoll(inviteCode: inviteCode) { result in
             DispatchQueue.main.async {
                 isJoiningPoll = false
-                if let error = error {
-                    statusMessage = "Failed: \(error.localizedDescription)"
-                    return
-                }
-                guard let data = data else {
-                    statusMessage = "No data returned."
-                    return
-                }
-                do {
-                    let joinedPoll = try JSONDecoder().decode(Poll.self, from: data)
-                    self.polls.insert(joinedPoll, at: 0)
-                    self.inviteCode = ""
-                    self.showJoinPoll = false
-                } catch {
-                    statusMessage = "Failed to join poll."
+                switch result {
+                case .success(_):
+                    inviteCode = ""
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        showJoinPoll = false
+                        fetchPolls()
+                    }
+                case .failure(let error):
+                    statusMessage = error.localizedDescription
                 }
             }
-        }.resume()
+        }
+    }
+
+    struct GradientBackground<Content: View>: View {
+        let content: Content
+        init(@ViewBuilder content: () -> Content) {
+            self.content = content()
+        }
+        var body: some View {
+            ZStack {
+                LinearGradient(
+                    gradient: Gradient(colors: [Color.pink.opacity(0.7), Color.orange.opacity(0.7)]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+                content
+            }
+        }
+    }
+
+    struct AppIcon: View {
+        var body: some View {
+            Image(systemName: "fork.knife.circle.fill")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 60, height: 60)
+                .foregroundColor(.pink)
+                .shadow(radius: 6)
+        }
+    }
+
+    struct TitleText: View {
+        let title: String
+        var body: some View {
+            Text(title)
+                .font(.title)
+                .fontWeight(.bold)
+                .foregroundColor(AppColors.textPrimary)
+        }
+    }
+
+    struct StatusOrLoadingView: View {
+        let isLoading: Bool
+        let statusMessage: String?
+        let isEmpty: Bool
+        let emptyText: String
+        var body: some View {
+            if isLoading {
+                ProgressView()
+            } else if let status = statusMessage {
+                Text(status)
+                    .foregroundColor(.red)
+            } else if isEmpty {
+                Text(emptyText)
+                    .foregroundColor(.gray)
+            }
+        }
+    }
+
+    struct PollTile: View {
+        let poll: Poll
+        let colorIndex: Int
+
+        // Cream color palette
+        private let backgroundColors: [Color] = [
+            Color(hex: "#fff7e3"),
+            Color(hex: "#fff7e4"),
+            Color(hex: "#fff8e4"),
+            Color(hex: "#fff8e3"),
+            Color(hex: "#fff8e5"),
+            Color(hex: "#ffffec"),
+            Color(hex: "#fffae6"),
+            Color(hex: "#fffce8"),
+            Color(hex: "#fff9e5"),
+        ]
+        private let borderColor = Color(hex: "#ffa43d")
+
+        var isOwner: Bool {
+            poll.role == "owner"
+        }
+
+        // Format the created_at string to a date string, or show as-is if parsing fails
+        var formattedDate: String {
+            let input = poll.created_at // This is a String
+            let isoFormatter = ISO8601DateFormatter()
+            if let date = isoFormatter.date(from: input) {
+                let formatter = DateFormatter()
+                formatter.dateStyle = .medium
+                return formatter.string(from: date)
+            } else {
+                return input // fallback: show the raw string
+            }
+        }
+
+        var numberOfMembers: Int {
+            poll.members.count
+        }
+
+        var body: some View {
+            VStack(spacing: 8) {
+                HStack {
+                    Image(systemName: isOwner ? "crown.fill" : "person.2.fill")
+                        .foregroundColor(isOwner ? borderColor : .gray)
+                        .imageScale(.large)
+                    Spacer()
+                }
+                .padding(.bottom, 2)
+
+                Text(poll.name)
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.black)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+
+                Text("By \(poll.created_by ?? "Unknown")")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+
+                HStack {
+                    Text(formattedDate)
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    Spacer()
+                    HStack(spacing: 4) {
+                        Image(systemName: "person.3.fill")
+                            .foregroundColor(borderColor)
+                            .imageScale(.small)
+                        Text("\(numberOfMembers)")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
+                }
+                .padding(.top, 4)
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(backgroundColors[colorIndex % backgroundColors.count])
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(borderColor, lineWidth: 2)
+            )
+            .shadow(color: borderColor.opacity(0.08), radius: 6, x: 0, y: 3)
+            .padding(.horizontal, 16)
+            .frame(maxWidth: 400)
+        }
+    }
+
+    struct PollActionButtons: View {
+        @Binding var showAddPoll: Bool
+        @Binding var showJoinPoll: Bool
+        @Binding var newPollName: String
+        @Binding var isCreatingPoll: Bool
+        let createPoll: () -> Void
+        @Binding var inviteCode: String
+        @Binding var isJoiningPoll: Bool
+        let joinPoll: () -> Void
+        var body: some View {
+            HStack(spacing: 16) {
+                Button(action: { showAddPoll = true }) {
+                    Text("Create Poll")
+                        .fontWeight(.semibold)
+                        .padding()
+                        .background(Color.pink.opacity(0.9))
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                }
+                Button(action: { showJoinPoll = true }) {
+                    Text("Join Poll")
+                        .fontWeight(.semibold)
+                        .padding()
+                        .background(Color.orange.opacity(0.9))
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                }
+            }
+            .padding(.top, 12)
+        }
+    }
+
+    struct AccountButton: View {
+        var body: some View {
+            NavigationLink(destination: AccountView()) {
+                HStack(spacing: 6) {
+                    Image(systemName: "person.crop.circle")
+                        .foregroundColor(.white)
+                    Text("Account")
+                        .foregroundColor(.white)
+                }
+                .padding(.vertical, 6)
+                .padding(.horizontal, 10)
+                .background(Color.pink.opacity(0.7))
+                .cornerRadius(10)
+            }
+        }
     }
 }
+
+

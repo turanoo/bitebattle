@@ -13,141 +13,65 @@ struct AccountView: View {
     @AppStorage("isLoggedIn") var isLoggedIn: Bool = false
 
     var body: some View {
-        ZStack {
-            LinearGradient(
-                gradient: Gradient(colors: [Color.pink.opacity(0.7), Color.orange.opacity(0.7)]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+        AppGradientBackground {
+            AppBackground {
+                VStack(spacing: 24) {
+                    Spacer()
+                    Image(systemName: "person.crop.circle")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 80, height: 80)
+                        .foregroundColor(AppColors.orange)
+                        .shadow(radius: 8)
 
-            VStack(spacing: 28) {
-                Spacer()
+                    Text("Account")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(AppColors.textOnPrimary)
+                        .shadow(radius: 4)
 
-                Image(systemName: "person.crop.circle.fill")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 70, height: 70)
-                    .foregroundColor(.white)
-                    .shadow(radius: 8)
-
-                Text("Account Info")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                    .shadow(radius: 3)
-
-                if fetchFailed {
-                    Text("Error Retrieving Account Information")
-                        .foregroundColor(.white)
-                        .font(.headline)
-                        .padding()
-                        .background(Color.red.opacity(0.7))
-                        .cornerRadius(10)
-                        .shadow(radius: 2)
-                } else {
                     VStack(spacing: 16) {
-                        TextField("Name", text: $name)
-                            .padding()
-                            .background(Color.white.opacity(0.9))
-                            .cornerRadius(10)
-                            .autocapitalization(.words)
-                            .disableAutocorrection(true)
-                            .shadow(radius: 1)
-
-                        TextField("Email", text: $email)
-                            .padding()
-                            .background(Color.white.opacity(0.9))
-                            .cornerRadius(10)
-                            .keyboardType(.emailAddress)
-                            .autocapitalization(.none)
-                            .disableAutocorrection(true)
-                            .shadow(radius: 1)
-
-                        SecureField("New Password (optional)", text: $password)
-                            .padding()
-                            .background(Color.white.opacity(0.9))
-                            .cornerRadius(10)
-                            .shadow(radius: 1)
+                        AppTextField(placeholder: "Name", text: $name, icon: "person")
+                        AppTextField(placeholder: "Email", text: $email, icon: "envelope")
+                        AppTextField(placeholder: "Password", text: $password, isSecure: true, icon: "lock")
                     }
                     .padding(.horizontal, 24)
 
-                    Button(action: {
+                    if let status = statusMessage {
+                        Text(status)
+                            .foregroundColor(AppColors.error)
+                            .font(.subheadline)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                    }
+
+                    AppButton(title: "Update", icon: "checkmark.circle", background: AppColors.orange, foreground: AppColors.textOnPrimary, isLoading: isLoading, isDisabled: !fieldsChanged || isLoading) {
                         updateAccount()
-                    }) {
-                        if isLoading {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .pink))
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.pink.opacity(0.8))
-                                .foregroundColor(.white)
-                                .cornerRadius(12)
-                                .shadow(radius: 2)
-                        } else {
-                            Text("Update Account")
-                                .fontWeight(.semibold)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background((fieldsChanged || !password.isEmpty) ? Color.pink.opacity(0.8) : Color.gray.opacity(0.5))
-                                .foregroundColor(.white)
-                                .cornerRadius(12)
-                                .shadow(radius: 2)
-                        }
                     }
                     .padding(.horizontal, 24)
-                    .disabled(isLoading || (!fieldsChanged && password.isEmpty))
-                }
 
-                if let status = statusMessage {
-                    Text(status)
-                        .foregroundColor(.white)
-                        .font(.footnote)
-                        .padding(.top, 8)
-                        .shadow(radius: 1)
+                    Spacer()
                 }
-
-                // Sign Out Button
-                Button(action: {
-                    UserDefaults.standard.removeObject(forKey: "authToken")
-                    isLoggedIn = false
-                }) {
-                    Text("Sign Out")
-                        .fontWeight(.semibold)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.red.opacity(0.8))
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
-                        .shadow(radius: 2)
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 8)
-
-                Spacer()
+                .padding()
+                .navigationTitle("Account")
+                .navigationBarTitleDisplayMode(.inline)
             }
-            .padding()
         }
         .onAppear(perform: fetchAccount)
     }
 
     private var fieldsChanged: Bool {
-        name != originalName || email != originalEmail
+        name != originalName || email != originalEmail || !password.isEmpty
     }
 
     private func getAuthToken() -> String? {
         let token = UserDefaults.standard.string(forKey: "authToken")
-        print("Auth Token: \(token ?? "nil")")
         return token?.isEmpty == false ? token : nil
     }
 
     func fetchAccount() {
         guard let token = getAuthToken(),
-              let url = URL(string: "http://localhost:8080/api/account") else {
-            statusMessage = "Not logged in or token missing."
-            fetchFailed = true
-            return
-        }
+              let url = URL(string: Endpoints.account) else { return }
 
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
@@ -159,37 +83,27 @@ struct AccountView: View {
             DispatchQueue.main.async {
                 isLoading = false
                 if let error = error {
-                    statusMessage = "Fetch failed: \(error.localizedDescription)"
+                    statusMessage = error.localizedDescription
                     fetchFailed = true
                     return
                 }
-                guard let data = data else {
-                    statusMessage = "No data returned."
+                guard let data = data,
+                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                    statusMessage = "Failed to load account."
                     fetchFailed = true
                     return
                 }
-                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                   let fetchedName = json["name"] as? String,
-                   let fetchedEmail = json["email"] as? String {
-                    self.name = fetchedName
-                    self.email = fetchedEmail
-                    self.originalName = fetchedName
-                    self.originalEmail = fetchedEmail
-                    statusMessage = nil
-                    fetchFailed = false
-                } else {
-                    fetchFailed = true
-                }
+                name = json["name"] as? String ?? ""
+                email = json["email"] as? String ?? ""
+                originalName = name
+                originalEmail = email
             }
         }.resume()
     }
 
     func updateAccount() {
         guard let token = getAuthToken(),
-              let url = URL(string: "http://localhost:8080/api/account") else {
-            statusMessage = "Not logged in or token missing."
-            return
-        }
+              let url = URL(string: Endpoints.account) else { return }
 
         var request = URLRequest(url: url)
         request.httpMethod = "PUT"
@@ -204,36 +118,22 @@ struct AccountView: View {
             payload["password"] = password
         }
 
-        guard let httpBody = try? JSONSerialization.data(withJSONObject: payload) else {
-            statusMessage = "Failed to encode request body."
-            return
-        }
+        guard let httpBody = try? JSONSerialization.data(withJSONObject: payload) else { return }
         request.httpBody = httpBody
 
         isLoading = true
+        statusMessage = nil
         URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
                 isLoading = false
                 if let error = error {
-                    statusMessage = "Update failed: \(error.localizedDescription)"
+                    statusMessage = error.localizedDescription
                     return
                 }
-                guard let httpResponse = response as? HTTPURLResponse else {
-                    statusMessage = "Invalid response"
-                    return
-                }
-
-                if httpResponse.statusCode == 200 {
-                    statusMessage = "Account updated successfully!"
-                    password = ""
-                    originalName = name
-                    originalEmail = email
-                } else {
-                    statusMessage = "Update failed: Status \(httpResponse.statusCode)"
-                    if let data = data, let responseText = String(data: data, encoding: .utf8) {
-                        print("Server response: \(responseText)")
-                    }
-                }
+                statusMessage = "Account updated!"
+                password = ""
+                originalName = name
+                originalEmail = email
             }
         }.resume()
     }
