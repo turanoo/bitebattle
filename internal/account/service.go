@@ -7,8 +7,12 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/db"
+	"github.com/turanoo/bitebattle/pkg/db"
 	"golang.org/x/crypto/bcrypt"
+)
+
+var (
+	ErrInvalidPassword = errors.New("current password is incorrect")
 )
 
 type Service struct {
@@ -43,8 +47,8 @@ func isEmptyUpdateFields(name, email, password *string) bool {
 	return name == nil && email == nil && password == nil
 }
 
-func (s *Service) UpdateUserProfile(userID uuid.UUID, name, email, password *string) error {
-	if isEmptyUpdateFields(name, email, password) {
+func (s *Service) UpdateUserProfile(userID uuid.UUID, name, email, currentPassword, newPassword *string) error {
+	if isEmptyUpdateFields(name, email, newPassword) {
 		return errors.New("no fields provided for updating user profile")
 	}
 
@@ -62,14 +66,36 @@ func (s *Service) UpdateUserProfile(userID uuid.UUID, name, email, password *str
 		args = append(args, *email)
 		argIdx++
 	}
-	if password != nil {
-		hashed, err := bcrypt.GenerateFromPassword([]byte(*password), bcrypt.DefaultCost)
+
+	// Handle password update
+	if currentPassword != nil && newPassword != nil {
+		// Fetch current password hash
+		var storedHash string
+		err := s.DB.QueryRow(`SELECT password_hash FROM users WHERE id = $1`, userID).Scan(&storedHash)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return sql.ErrNoRows
+			}
+			return err
+		}
+		// Validate current password
+		if err := bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(*currentPassword)); err != nil {
+			return ErrInvalidPassword
+		}
+		// Hash new password
+		hashed, err := bcrypt.GenerateFromPassword([]byte(*newPassword), bcrypt.DefaultCost)
 		if err != nil {
 			return err
 		}
 		setClauses = append(setClauses, "password_hash = $"+strconv.Itoa(argIdx))
 		args = append(args, string(hashed))
 		argIdx++
+	} else if currentPassword != nil || newPassword != nil {
+		return errors.New("both currentPassword and newPassword must be provided to update password")
+	}
+
+	if len(setClauses) == 0 {
+		return errors.New("no valid fields provided for update")
 	}
 
 	query := "UPDATE users SET " + strings.Join(setClauses, ", ") + " WHERE id = $" + strconv.Itoa(argIdx)

@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/utils"
+	"github.com/turanoo/bitebattle/pkg/utils"
 )
 
 const userIDContextKey = "userID"

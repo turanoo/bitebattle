@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
-	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/db"
+	"github.com/turanoo/bitebattle/pkg/db"
 )
 
 type Service struct {

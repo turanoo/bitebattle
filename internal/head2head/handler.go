@@ -5,9 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/turanoo/bitebattle/bitebattle-backend/internal/auth"
-	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/logger"
-	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/utils"
+	"github.com/turanoo/bitebattle/internal/auth"
+	"github.com/turanoo/bitebattle/pkg/logger"
+	"github.com/turanoo/bitebattle/pkg/utils"
 )
 
 type Handler struct {

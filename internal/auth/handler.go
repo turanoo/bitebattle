@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/turanoo/bitebattle/bitebattle-backend/internal/user"
-	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/logger"
-	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/utils"
+	"github.com/turanoo/bitebattle/internal/user"
+	"github.com/turanoo/bitebattle/pkg/logger"
+	"github.com/turanoo/bitebattle/pkg/utils"
 )
 
 type Handler struct {

@@ -1,12 +1,13 @@
 package account
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/turanoo/bitebattle/bitebattle-backend/internal/auth"
-	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/logger"
-	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/utils"
+	"github.com/turanoo/bitebattle/internal/auth"
+	"github.com/turanoo/bitebattle/pkg/logger"
+	"github.com/turanoo/bitebattle/pkg/utils"
 )
 
 type Handler struct {
@@ -52,9 +53,10 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 	}
 
 	var req struct {
-		Name     *string `json:"name"`
-		Email    *string `json:"email"`
-		Password *string `json:"password"`
+		Name            *string `json:"name"`
+		Email           *string `json:"email"`
+		CurrentPassword *string `json:"current_password"`
+		NewPassword     *string `json:"new_password"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -63,8 +65,13 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	err = h.Service.UpdateUserProfile(userID, req.Name, req.Email, req.Password)
+	err = h.Service.UpdateUserProfile(userID, req.Name, req.Email, req.CurrentPassword, req.NewPassword)
 	if err != nil {
+		if errors.Is(err, ErrInvalidPassword) {
+			logger.Warnf("Incorrect current password for user %s", userID)
+			utils.ErrorResponse(c, http.StatusUnauthorized, "current password is incorrect")
+			return
+		}
 		logger.Errorf("Failed to update profile for user %s: %v", userID, err)
 		utils.ErrorResponse(c, http.StatusInternalServerError, "update failed")
 		return

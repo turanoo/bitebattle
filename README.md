@@ -38,7 +38,7 @@ BiteBattle Backend is designed to support group-based restaurant voting, head-to
 ### Project Structure
 
 ```
-bitebattle-backend/
+bitebattle/
 ├── api/                # Route setup
 ├── cmd/server/         # Main entrypoint
 ├── config/             # Configuration loading
@@ -195,8 +195,8 @@ bitebattle-backend/
 ### 1. Clone the Repository
 
 ```sh
-git clone https://github.com/yourusername/bitebattle-backend.git
-cd bitebattle-backend
+git clone https://github.com/turanoo/bitebattle.git
+cd bitebattle
 ```
 
 ### 2. Configure Environment Variables

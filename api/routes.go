@@ -4,12 +4,12 @@ import (
 	"database/sql"
 
 	"github.com/gin-gonic/gin"
-	"github.com/turanoo/bitebattle/bitebattle-backend/internal/account"
-	"github.com/turanoo/bitebattle/bitebattle-backend/internal/auth"
-	"github.com/turanoo/bitebattle/bitebattle-backend/internal/head2head"
-	"github.com/turanoo/bitebattle/bitebattle-backend/internal/poll"
-	"github.com/turanoo/bitebattle/bitebattle-backend/internal/restaurant"
-	"github.com/turanoo/bitebattle/bitebattle-backend/internal/user"
+	"github.com/turanoo/bitebattle/internal/account"
+	"github.com/turanoo/bitebattle/internal/auth"
+	"github.com/turanoo/bitebattle/internal/head2head"
+	"github.com/turanoo/bitebattle/internal/poll"
+	"github.com/turanoo/bitebattle/internal/restaurant"
+	"github.com/turanoo/bitebattle/internal/user"
 )
 
 func SetupRoutes(router *gin.Engine, db *sql.DB) {

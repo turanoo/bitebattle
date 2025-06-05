@@ -7,9 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
-	"github.com/turanoo/bitebattle/bitebattle-backend/api"
-	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/db"
-	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/logger"
+	"github.com/turanoo/bitebattle/api"
+	"github.com/turanoo/bitebattle/pkg/db"
+	"github.com/turanoo/bitebattle/pkg/logger"
 )
 
 func main() {

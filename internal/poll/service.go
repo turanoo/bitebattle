@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/db"
-	"github.com/turanoo/bitebattle/bitebattle-backend/pkg/utils"
+	"github.com/turanoo/bitebattle/pkg/db"
+	"github.com/turanoo/bitebattle/pkg/utils"
 )
 
 type Service struct {
