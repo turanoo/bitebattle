@@ -1,14 +1,17 @@
+version: '3.8'
 services:
   db:
     image: postgres:15
     container_name: bitebattle-db
     restart: always
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: bitebattle_dev
-      POSTGRES_USER: turan1393
-      POSTGRES_PASSWORD: securePassword123
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
