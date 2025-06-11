@@ -52,3 +52,11 @@ build:
 
 .PHONY: debug
 debug: destroy up migrate
+
+.PHONY: docker-build
+docker-build:
+	docker build -t gcr.io/bitebattle/server .
+
+.PHONY: docker-push
+docker-push:
+	docker push gcr.io/bitebattle/server

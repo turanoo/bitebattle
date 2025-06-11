@@ -1,14 +1,15 @@
-#!/bin/bash
-
-# Exit if anything fails
+#!/bin/sh
 set -e
 
-# Ensure this is set — change if needed
-DB_URL=${DB_URL:-"postgres://postgres:postgres@db:5432/bitebattle?sslmode=disable"}
+if [ -n "$INSTANCE_CONNECTION_NAME" ]; then
+  # Cloud SQL Unix socket for migrate CLI
+  DB_URL="postgres://$DB_USER:$DB_PASS@/$DB_NAME?host=/cloudsql/$INSTANCE_CONNECTION_NAME&sslmode=disable"
+else
+  # TCP (local/dev)
+  DB_HOST=${DB_HOST:-localhost}
+  DB_PORT=${DB_PORT:-5432}
+  DB_URL="postgres://$DB_USER:$DB_PASS@$DB_HOST:$DB_PORT/$DB_NAME?sslmode=disable"
+fi
 
-docker run --rm \
-  -v $(pwd)/migrations:/migrations \
-  migrate/migrate \
-  -path=/migrations \
-  -database "$DB_URL" \
-  up
+echo "[MIGRATE DEBUG] DB_URL=$DB_URL"
+migrate -path=/app/migrations -database "$DB_URL" up
