@@ -3,10 +3,6 @@ ENV_FILE = .env
 COMPOSE = docker-compose
 DB_CONTAINER = bitebattle-db
 
-# Migration tool binary (assuming you're using golang-migrate)
-MIGRATE = migrate
-MIGRATIONS_DIR = ./migrations
-DB_URL = postgres://$(shell grep DB_USER $(ENV_FILE) | cut -d '=' -f2):$(shell grep DB_PASSWORD $(ENV_FILE) | cut -d '=' -f2)@localhost:5432/$(shell grep DB_NAME $(ENV_FILE) | cut -d '=' -f2)?sslmode=disable
 
 # Default target
 .PHONY: help
@@ -28,7 +24,7 @@ up:
 
 .PHONY: migrate
 migrate:
-	$(MIGRATE) -path $(MIGRATIONS_DIR) -database "$(DB_URL)" up
+	bash scripts/run_migrations.sh
 
 .PHONY: run
 run:
