@@ -39,8 +39,6 @@ JWT_SECRET=your_jwt_secret
 GOOGLE_PLACES_API_KEY=your_google_places_api_key
 ```
 
-Ensure `docker-compose.yml` has the same values for PostgreSQL. 
-
 ### 3. Start PostgreSQL with Docker Compose
 
 Ensure your Docker daemon is prior to executing the next steps!
