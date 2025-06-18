@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/turanoo/bitebattle/internal/auth"
 	"github.com/turanoo/bitebattle/pkg/logger"
 	"github.com/turanoo/bitebattle/pkg/utils"
 )
@@ -16,14 +15,6 @@ type Handler struct {
 
 func NewHandler(service *Service) *Handler {
 	return &Handler{Service: service}
-}
-
-func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
-	account := rg.Group("/account")
-	account.Use(auth.AuthMiddleware())
-
-	account.GET("", h.GetProfile)
-	account.PUT("", h.UpdateProfile)
 }
 
 func (h *Handler) GetProfile(c *gin.Context) {

@@ -5,7 +5,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/turanoo/bitebattle/internal/auth"
 	"github.com/turanoo/bitebattle/pkg/logger"
 	"github.com/turanoo/bitebattle/pkg/utils"
 )
@@ -18,37 +17,27 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{Service: service}
 }
 
-func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
-	h2h := rg.Group("/h2h")
-	h2h.Use(auth.AuthMiddleware())
-
-	h2h.POST("/match", h.CreateMatchHandler)
-	h2h.POST("/match/:id/accept", h.AcceptMatchHandler)
-	h2h.POST("/match/:id/swipe", h.SubmitSwipeHandler)
-	h2h.GET("/match/:id/results", h.GetMatchResultsHandler)
-}
-
-func (h *Handler) CreateMatchHandler(c *gin.Context) {
+func (h *Handler) CreateMatch(c *gin.Context) {
 	var req struct {
 		InviteeID  string   `json:"invitee_id"`
 		Categories []string `json:"categories"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.Warnf("Invalid request in CreateMatchHandler: %v", err)
+		logger.Warnf("Invalid request in CreateMatch: %v", err)
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid request")
 		return
 	}
 
 	inviterID, err := utils.UserIDFromContext(c)
 	if err != nil {
-		logger.Warnf("Invalid inviter ID in CreateMatchHandler: %v", err)
+		logger.Warnf("Invalid inviter ID in CreateMatch: %v", err)
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid inviter ID")
 		return
 	}
 	inviteeID, err := uuid.Parse(req.InviteeID)
 	if err != nil {
-		logger.Warnf("Invalid invitee ID in CreateMatchHandler: %v", err)
+		logger.Warnf("Invalid invitee ID in CreateMatch: %v", err)
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid invitee ID")
 		return
 	}
@@ -64,7 +53,7 @@ func (h *Handler) CreateMatchHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, match)
 }
 
-func (h *Handler) AcceptMatchHandler(c *gin.Context) {
+func (h *Handler) AcceptMatch(c *gin.Context) {
 	matchID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid match ID")
@@ -73,7 +62,7 @@ func (h *Handler) AcceptMatchHandler(c *gin.Context) {
 
 	userID, err := utils.UserIDFromContext(c)
 	if err != nil {
-		logger.Warnf("Invalid user id in AcceptMatchHandler: %v", err)
+		logger.Warnf("Invalid user id in AcceptMatch: %v", err)
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
 	}
@@ -86,7 +75,7 @@ func (h *Handler) AcceptMatchHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "match accepted"})
 }
 
-func (h *Handler) SubmitSwipeHandler(c *gin.Context) {
+func (h *Handler) SubmitSwipe(c *gin.Context) {
 	matchID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid match ID")
@@ -95,7 +84,7 @@ func (h *Handler) SubmitSwipeHandler(c *gin.Context) {
 
 	userID, err := utils.UserIDFromContext(c)
 	if err != nil {
-		logger.Warnf("Invalid user id in SubmitSwipeHandler: %v", err)
+		logger.Warnf("Invalid user id in SubmitSwipe: %v", err)
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
 	}
@@ -120,7 +109,7 @@ func (h *Handler) SubmitSwipeHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, swipe)
 }
 
-func (h *Handler) GetMatchResultsHandler(c *gin.Context) {
+func (h *Handler) GetMatchResults(c *gin.Context) {
 	matchID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid match ID")

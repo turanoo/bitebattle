@@ -17,12 +17,7 @@ func NewHandler(userService *user.Service) *Handler {
 	return &Handler{userService: userService}
 }
 
-func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
-	rg.POST("/register", h.RegisterHandler)
-	rg.POST("/login", h.LoginHandler)
-}
-
-func (h *Handler) RegisterHandler(c *gin.Context) {
+func (h *Handler) Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.Warnf("Invalid register request: %v", err)
@@ -62,7 +57,7 @@ func (h *Handler) RegisterHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"token": token})
 }
 
-func (h *Handler) LoginHandler(c *gin.Context) {
+func (h *Handler) Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.Warnf("Invalid login request: %v", err)

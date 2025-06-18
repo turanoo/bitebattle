@@ -16,12 +16,6 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{Service: service}
 }
 
-func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
-	users := rg.Group("/users")
-	users.GET(":id", h.GetUser)
-	users.GET("", h.GetUserByQuery)
-}
-
 func (h *Handler) CreateUser(c *gin.Context) {
 	var u User
 	if err := c.ShouldBindJSON(&u); err != nil {

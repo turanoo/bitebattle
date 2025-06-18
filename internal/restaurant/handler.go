@@ -16,11 +16,6 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{Service: service}
 }
 
-func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
-	routes := rg.Group("/restaurants")
-	routes.GET("/search", h.SearchRestaurants)
-}
-
 func (h *Handler) SearchRestaurants(c *gin.Context) {
 	query := c.Query("q")
 	if query == "" {
