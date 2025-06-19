@@ -6,9 +6,9 @@ on:
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT }}
+  IMAGE: gcr.io/${{ secrets.GCP_PROJECT }}/server
   REGION: us-central1
   SERVICE: bitebattle-backend
-  IMAGE: gcr.io/${{ secrets.GCP_PROJECT }}/server
 
 jobs:
   deploy:
