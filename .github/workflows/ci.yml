@@ -28,12 +28,14 @@ jobs:
           args: --timeout=5m
 
       - name: Run tests with coverage
-        run: go test -v -coverprofile=coverage.out ./tests/...
+        run: |
+          cd tests
+          go test -v -coverprofile=coverage.out ./...
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          files: coverage.out
+          files: tests/coverage.out
           flags: unittests
           fail_ci_if_error: true
         env:
