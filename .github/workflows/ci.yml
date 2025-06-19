@@ -3,8 +3,20 @@ name: CI
 on:
   push:
     branches: [master]
+    paths-ignore:
+      - 'README.md'
+      - 'swagger.yaml'
+      - 'Makefile'
+      - '.github/**'
+      - 'docs/**'
   pull_request:
     branches: [master]
+    paths-ignore:
+      - 'README.md'
+      - 'swagger.yaml'
+      - 'Makefile'
+      - '.github/**'
+      - 'docs/**'
 
 permissions:
   contents: read
