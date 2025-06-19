@@ -15,6 +15,8 @@ help:
 	@echo "  make stop            Stop containers"
 	@echo "  make destroy         Stop and destroy containers (data will be deleted from db)"
 	@echo "  make build           Build Go binary"
+	@echo "  make lint            Run golangci-lint to check code quality"
+	@echo "  make test            Run tests"
 
 .PHONY: up
 up:
@@ -56,3 +58,11 @@ docker-build:
 .PHONY: docker-push
 docker-push:
 	docker push gcr.io/bitebattle/server
+
+.PHONY: lint
+build:
+	golangci-lint run ./...
+
+.PHONY: test
+build:
+	cd tests && go test ./... && cd ..
