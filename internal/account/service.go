@@ -1,18 +1,22 @@
 package account
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
+	"github.com/turanoo/bitebattle/internal/user"
 	"github.com/turanoo/bitebattle/pkg/db"
 	"golang.org/x/crypto/bcrypt"
 )
 
 var (
 	ErrInvalidPassword = errors.New("current password is incorrect")
+	ErrEmailExists     = errors.New("user with this email already exists")
 )
 
 type Service struct {
@@ -67,9 +71,8 @@ func (s *Service) UpdateUserProfile(userID uuid.UUID, name, email, currentPasswo
 		argIdx++
 	}
 
-	// Handle password update
 	if currentPassword != nil && newPassword != nil {
-		// Fetch current password hash
+
 		var storedHash string
 		err := s.DB.QueryRow(`SELECT password_hash FROM users WHERE id = $1`, userID).Scan(&storedHash)
 		if err != nil {
@@ -78,11 +81,11 @@ func (s *Service) UpdateUserProfile(userID uuid.UUID, name, email, currentPasswo
 			}
 			return err
 		}
-		// Validate current password
+
 		if err := bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(*currentPassword)); err != nil {
 			return ErrInvalidPassword
 		}
-		// Hash new password
+
 		hashed, err := bcrypt.GenerateFromPassword([]byte(*newPassword), bcrypt.DefaultCost)
 		if err != nil {
 			return err
@@ -113,4 +116,34 @@ func (s *Service) UpdateUserProfile(userID uuid.UUID, name, email, currentPasswo
 		return sql.ErrNoRows
 	}
 	return nil
+}
+
+func (s *Service) UpdateProfile(ctx context.Context, userID string, name, email string) error {
+	_, err := s.DB.ExecContext(ctx, `
+		UPDATE users SET name = $1, email = $2, updated_at = NOW()
+		WHERE id = $3
+	`, name, email, userID)
+
+	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
+			return ErrEmailExists
+		}
+		return err
+	}
+	return nil
+}
+
+func (s *Service) GetProfile(ctx context.Context, userID string) (*user.User, error) {
+	row := s.DB.QueryRowContext(ctx, `
+		SELECT id, name, email, created_at, updated_at
+		FROM users
+		WHERE id = $1
+	`, userID)
+
+	var u user.User
+	err := row.Scan(&u.ID, &u.Name, &u.Email, &u.CreatedAt, &u.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &u, nil
 }

@@ -36,37 +36,25 @@ func (h *Handler) GetProfile(c *gin.Context) {
 }
 
 func (h *Handler) UpdateProfile(c *gin.Context) {
-	userID, err := utils.UserIDFromContext(c)
-	if err != nil {
-		logger.Warnf("Invalid user id in UpdateProfile: %v", err)
-		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
-		return
-	}
+	userID, _ := c.Get("userID")
 
-	var req struct {
-		Name            *string `json:"name"`
-		Email           *string `json:"email"`
-		CurrentPassword *string `json:"current_password"`
-		NewPassword     *string `json:"new_password"`
-	}
-
+	var req UpdateProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.Warnf("Invalid request in UpdateProfile: %v", err)
-		utils.ErrorResponse(c, http.StatusBadRequest, "invalid request")
+		utils.ErrorResponse(c, http.StatusBadRequest, utils.FormatValidationError(err))
 		return
 	}
 
-	err = h.Service.UpdateUserProfile(userID, req.Name, req.Email, req.CurrentPassword, req.NewPassword)
+	ctx := c.Request.Context()
+	err := h.Service.UpdateProfile(ctx, userID.(string), req.Name, req.Email)
 	if err != nil {
-		if errors.Is(err, ErrInvalidPassword) {
-			logger.Warnf("Incorrect current password for user %s", userID)
-			utils.ErrorResponse(c, http.StatusUnauthorized, "current password is incorrect")
-			return
+		if errors.Is(err, ErrEmailExists) {
+			utils.ErrorResponse(c, http.StatusConflict, "User with this email already exists.")
+		} else {
+			logger.Errorf("Failed to update profile for user %s: %v", userID, err)
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to update profile.")
 		}
-		logger.Errorf("Failed to update profile for user %s: %v", userID, err)
-		utils.ErrorResponse(c, http.StatusInternalServerError, "update failed")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "profile updated"})
+	c.Status(http.StatusOK)
 }

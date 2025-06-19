@@ -1,6 +1,8 @@
 package user
 
 import (
+	"database/sql"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -19,48 +21,60 @@ func NewHandler(service *Service) *Handler {
 func (h *Handler) CreateUser(c *gin.Context) {
 	var u User
 	if err := c.ShouldBindJSON(&u); err != nil {
-		logger.Warnf("Invalid input in CreateUser: %v", err)
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid input")
+		utils.ErrorResponse(c, http.StatusBadRequest, utils.FormatValidationError(err))
 		return
 	}
 
-	if _, err := h.Service.CreateUser(c.Request.Context(), &u); err != nil {
-		logger.Errorf("Failed to create user: %v", err)
-		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to create user")
+	ctx := c.Request.Context()
+	createdUser, err := h.Service.CreateUser(ctx, &u)
+	if err != nil {
+		if errors.Is(err, ErrUserExists) {
+			utils.ErrorResponse(c, http.StatusConflict, "User with this email already exists.")
+		} else {
+			logger.Errorf("Failed to create user: %v", err)
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to create user.")
+		}
 		return
 	}
 
-	logger.Infof("User created: %s", u.Email)
-	c.JSON(http.StatusCreated, u)
+	c.JSON(http.StatusCreated, createdUser)
 }
 
 func (h *Handler) GetUser(c *gin.Context) {
 	id := c.Param("id")
-
-	user, err := h.Service.GetUserByID(c.Request.Context(), id)
+	ctx := c.Request.Context()
+	user, err := h.Service.GetUserByID(ctx, id)
 	if err != nil {
-		logger.Warnf("User not found: %s", id)
-		utils.ErrorResponse(c, http.StatusNotFound, "User not found")
+		if errors.Is(err, sql.ErrNoRows) {
+			utils.ErrorResponse(c, http.StatusNotFound, "User not found.")
+		} else {
+			logger.Errorf("Failed to get user %s: %v", id, err)
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to retrieve user.")
+		}
 		return
 	}
 
-	logger.Infof("User fetched: %s", id)
 	c.JSON(http.StatusOK, user)
 }
 
 func (h *Handler) GetUserByQuery(c *gin.Context) {
 	email := c.Query("email")
 	if email == "" {
-		logger.Warn("email query param required in GetUserByQuery")
-		utils.ErrorResponse(c, http.StatusBadRequest, "email query param required")
+		utils.ErrorResponse(c, http.StatusBadRequest, "Email query parameter is required.")
 		return
 	}
-	user, err := h.Service.GetUserByEmail(c.Request.Context(), email)
-	if err != nil || user == nil {
-		logger.Warnf("User not found by email: %s", email)
-		utils.ErrorResponse(c, http.StatusNotFound, "User not found")
+
+	ctx := c.Request.Context()
+	user, err := h.Service.GetUserByEmail(ctx, email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			utils.ErrorResponse(c, http.StatusNotFound, "User not found.")
+		} else {
+			logger.Errorf("Failed to get user by email %s: %v", email, err)
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to retrieve user.")
+		}
 		return
 	}
-	logger.Infof("User fetched by email: %s", email)
+
 	c.JSON(http.StatusOK, user)
 }

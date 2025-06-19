@@ -18,23 +18,20 @@ func NewHandler(service *Service) *Handler {
 }
 
 func (h *Handler) CreateMatch(c *gin.Context) {
-	var req struct {
-		InviteeID  string   `json:"invitee_id"`
-		Categories []string `json:"categories"`
-	}
-
+	var req CreateMatchRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.Warnf("Invalid request in CreateMatch: %v", err)
-		utils.ErrorResponse(c, http.StatusBadRequest, "invalid request")
+		utils.ErrorResponse(c, http.StatusBadRequest, utils.FormatValidationError(err))
 		return
 	}
 
-	inviterID, err := utils.UserIDFromContext(c)
+	userID, _ := c.Get("userID")
+	inviterUUID, err := uuid.Parse(userID.(string))
 	if err != nil {
-		logger.Warnf("Invalid inviter ID in CreateMatch: %v", err)
-		utils.ErrorResponse(c, http.StatusBadRequest, "invalid inviter ID")
+		logger.Warnf("Invalid user id in CreateMatch: %v", err)
+		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
 	}
+
 	inviteeID, err := uuid.Parse(req.InviteeID)
 	if err != nil {
 		logger.Warnf("Invalid invitee ID in CreateMatch: %v", err)
@@ -42,14 +39,14 @@ func (h *Handler) CreateMatch(c *gin.Context) {
 		return
 	}
 
-	match, err := h.Service.CreateMatch(inviterID, inviteeID, req.Categories)
+	match, err := h.Service.CreateMatch(inviterUUID, inviteeID, req.Categories)
 	if err != nil {
 		logger.Errorf("Could not create match: %v", err)
 		utils.ErrorResponse(c, http.StatusInternalServerError, "could not create match")
 		return
 	}
 
-	logger.Infof("Head2Head match created: %s by %s", match.ID, inviterID)
+	logger.Infof("Head2Head match created: %s by %s", match.ID, userID)
 	c.JSON(http.StatusCreated, match)
 }
 
@@ -76,7 +73,14 @@ func (h *Handler) AcceptMatch(c *gin.Context) {
 }
 
 func (h *Handler) SubmitSwipe(c *gin.Context) {
-	matchID, err := uuid.Parse(c.Param("id"))
+	var req SubmitSwipeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, utils.FormatValidationError(err))
+		return
+	}
+
+	matchIDStr := c.Param("id")
+	matchID, err := uuid.Parse(matchIDStr)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid match ID")
 		return
@@ -86,17 +90,6 @@ func (h *Handler) SubmitSwipe(c *gin.Context) {
 	if err != nil {
 		logger.Warnf("Invalid user id in SubmitSwipe: %v", err)
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
-		return
-	}
-
-	var req struct {
-		RestaurantID   string `json:"restaurant_id"`
-		RestaurantName string `json:"restaurant_name"`
-		Liked          bool   `json:"liked"`
-	}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "invalid request")
 		return
 	}
 

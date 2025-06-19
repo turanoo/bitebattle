@@ -13,6 +13,8 @@ import (
 	"github.com/turanoo/bitebattle/pkg/utils"
 )
 
+var ErrInvalidInviteCode = errors.New("invalid invite code")
+
 type Service struct {
 	DB *sql.DB
 }
@@ -264,7 +266,7 @@ func (s *Service) JoinPoll(inviteCode string, userId uuid.UUID) (*Poll, error) {
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.New("invalid invite code")
+			return nil, ErrInvalidInviteCode
 		}
 		return nil, err
 	}
@@ -339,7 +341,7 @@ func (s *Service) RemoveVote(pollID, optionID, userID uuid.UUID) error {
 	}
 
 	if rowsAffected == 0 {
-		return errors.New("vote not found")
+		return sql.ErrNoRows
 	}
 
 	return nil

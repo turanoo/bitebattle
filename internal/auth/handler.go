@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -21,7 +22,12 @@ func (h *Handler) Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.Warnf("Invalid register request: %v", err)
-		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
+		utils.ErrorResponse(c, http.StatusBadRequest, utils.FormatValidationError(err))
+		return
+	}
+
+	if !utils.IsPasswordStrong(req.Password) {
+		utils.ErrorResponse(c, http.StatusBadRequest, utils.ErrWeakPassword.Error())
 		return
 	}
 
@@ -32,17 +38,21 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
-	user := &user.User{
+	user_ := &user.User{
 		Email:        req.Email,
 		PasswordHash: hashedPassword,
 		Name:         req.Name,
 	}
 
 	ctx := c.Request.Context()
-	createdUser, err := h.userService.CreateUser(ctx, user)
+	createdUser, err := h.userService.CreateUser(ctx, user_)
 	if err != nil {
-		logger.Warnf("Failed to create user: %v", err)
-		utils.ErrorResponse(c, http.StatusConflict, err.Error())
+		if errors.Is(err, user.ErrUserExists) {
+			utils.ErrorResponse(c, http.StatusConflict, "User with this email already exists.")
+		} else {
+			logger.Warnf("Failed to create user: %v", err)
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to create user.")
+		}
 		return
 	}
 
@@ -61,7 +71,7 @@ func (h *Handler) Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.Warnf("Invalid login request: %v", err)
-		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
+		utils.ErrorResponse(c, http.StatusBadRequest, utils.FormatValidationError(err))
 		return
 	}
 

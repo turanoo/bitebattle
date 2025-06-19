@@ -6,6 +6,29 @@ import (
 	"github.com/google/uuid"
 )
 
+type CreatePollRequest struct {
+	Name string `json:"name" binding:"required,min=2,max=100"`
+}
+
+type JoinPollRequest struct {
+	InviteCode string `json:"invite_code" binding:"required,len=8"`
+}
+
+type UpdatePollRequest struct {
+	Name string `json:"name" binding:"required,min=2,max=100"`
+}
+
+type AddOptionRequest []struct {
+	RestaurantID string `json:"restaurant_id" binding:"required"`
+	Name         string `json:"name" binding:"required"`
+	ImageURL     string `json:"image_url"`
+	MenuURL      string `json:"menu_url"`
+}
+
+type VoteRequest struct {
+	OptionID string `json:"option_id" binding:"required,uuid"`
+}
+
 type Poll struct {
 	ID         uuid.UUID   `json:"id"`
 	Name       string      `json:"name"`

@@ -3,11 +3,15 @@ package user
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/turanoo/bitebattle/pkg/db"
 )
+
+var ErrUserExists = errors.New("user with this email already exists")
 
 type Service struct {
 	DB *sql.DB
@@ -27,7 +31,14 @@ func (s *Service) CreateUser(ctx context.Context, u *User) (*User, error) {
 		VALUES ($1, $2, $3, $4, $5, $6)
 	`, u.ID, u.Email, u.Name, u.PasswordHash, u.CreatedAt, u.UpdatedAt)
 
-	return u, err
+	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
+			return nil, ErrUserExists
+		}
+		return nil, err
+	}
+
+	return u, nil
 }
 
 func (s *Service) GetUserByID(ctx context.Context, id string) (*User, error) {

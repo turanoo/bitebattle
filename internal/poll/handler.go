@@ -1,11 +1,12 @@
 package poll
 
 import (
+	"database/sql"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/turanoo/bitebattle/internal/auth"
 	"github.com/turanoo/bitebattle/pkg/logger"
 	"github.com/turanoo/bitebattle/pkg/utils"
 )
@@ -19,30 +20,20 @@ func NewHandler(service *Service) *Handler {
 }
 
 func (h *Handler) CreatePoll(c *gin.Context) {
-	var req struct {
-		Name string `json:"name"`
-	}
+	var req CreatePollRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		logger.Warnf("Invalid request in CreatePoll: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		utils.ErrorResponse(c, http.StatusBadRequest, utils.FormatValidationError(err))
 		return
 	}
 
-	userIDStr, ok := auth.GetUserIDFromContext(c)
-	if !ok {
+	userID, exists := c.Get("userID")
+	if !exists {
 		logger.Warn("Unauthorized access in CreatePoll")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		logger.Warnf("Invalid user ID in CreatePoll: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
-		return
-	}
-
-	poll, err := h.Service.CreatePoll(req.Name, userID)
+	poll, err := h.Service.CreatePoll(req.Name, userID.(uuid.UUID))
 	if err != nil {
 		logger.Errorf("Failed to create poll for user %s: %v", userID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create poll"})
@@ -71,6 +62,32 @@ func (h *Handler) GetPolls(c *gin.Context) {
 	c.JSON(http.StatusOK, polls)
 }
 
+func (h *Handler) JoinPoll(c *gin.Context) {
+	var req JoinPollRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, utils.FormatValidationError(err))
+		return
+	}
+
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	poll, err := h.Service.JoinPoll(req.InviteCode, uuid.MustParse(userID.(string)))
+	if err != nil {
+		if errors.Is(err, ErrInvalidInviteCode) {
+			utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
+		} else {
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to join poll.")
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, poll)
+}
+
 func (h *Handler) GetPoll(c *gin.Context) {
 	pollID, err := uuid.Parse(c.Param("pollId"))
 	if err != nil {
@@ -78,21 +95,19 @@ func (h *Handler) GetPoll(c *gin.Context) {
 		return
 	}
 
-	userIDStr, ok := auth.GetUserIDFromContext(c)
-	if !ok {
+	userID, exists := c.Get("userID")
+	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	userID, err := uuid.Parse(userIDStr)
+	poll, err := h.Service.GetPoll(pollID, uuid.MustParse(userID.(string)))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
-		return
-	}
-
-	poll, err := h.Service.GetPoll(pollID, userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get poll"})
+		if errors.Is(err, sql.ErrNoRows) {
+			utils.ErrorResponse(c, http.StatusNotFound, "Poll not found.")
+		} else {
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to retrieve poll.")
+		}
 		return
 	}
 
@@ -106,9 +121,12 @@ func (h *Handler) DeletePoll(c *gin.Context) {
 		return
 	}
 
-	err = h.Service.DeletePoll(pollID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete poll"})
+	if err := h.Service.DeletePoll(pollID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			utils.ErrorResponse(c, http.StatusNotFound, "Poll not found.")
+		} else {
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to delete poll.")
+		}
 		return
 	}
 
@@ -116,17 +134,16 @@ func (h *Handler) DeletePoll(c *gin.Context) {
 }
 
 func (h *Handler) UpdatePoll(c *gin.Context) {
-	pollID, err := uuid.Parse(c.Param("pollId"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid poll ID"})
+	var req UpdatePollRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, utils.FormatValidationError(err))
 		return
 	}
 
-	var req struct {
-		Name string `json:"name"`
-	}
-	if err := c.ShouldBindJSON(&req); err != nil || req.Name == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "name is required in body"})
+	pollIDStr := c.Param("pollId")
+	pollID, err := uuid.Parse(pollIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid poll ID"})
 		return
 	}
 
@@ -139,57 +156,17 @@ func (h *Handler) UpdatePoll(c *gin.Context) {
 	c.JSON(http.StatusOK, poll)
 }
 
-func (h *Handler) JoinPoll(c *gin.Context) {
-	pollId := c.Param("pollId")
-	if pollId == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "pollId is required"})
-		return
-	}
-	var req struct {
-		InviteCode string `json:"invite_code"`
-	}
-	if err := c.ShouldBindJSON(&req); err != nil || req.InviteCode == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invite_code is required in body"})
-		return
-	}
-	userIDStr, ok := auth.GetUserIDFromContext(c)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
-		return
-	}
-	poll, err := h.Service.JoinPoll(req.InviteCode, userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to join poll"})
-		return
-	}
-	c.JSON(http.StatusOK, poll)
-}
-
 func (h *Handler) AddOption(c *gin.Context) {
-	pollID, err := uuid.Parse(c.Param("pollId"))
+	var req AddOptionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, utils.FormatValidationError(err))
+		return
+	}
+
+	pollIDStr := c.Param("pollId")
+	pollID, err := uuid.Parse(pollIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid poll ID"})
-		return
-	}
-
-	var req []struct {
-		RestaurantID string `json:"restaurant_id"`
-		Name         string `json:"name"`
-		ImageURL     string `json:"image_url"`
-		MenuURL      string `json:"menu_url"`
-	}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
-		return
-	}
-
-	if len(req) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no options provided"})
 		return
 	}
 
@@ -207,29 +184,22 @@ func (h *Handler) AddOption(c *gin.Context) {
 }
 
 func (h *Handler) CastVote(c *gin.Context) {
-	pollID, err := uuid.Parse(c.Param("pollId"))
+	var req VoteRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, utils.FormatValidationError(err))
+		return
+	}
+
+	pollIDStr := c.Param("pollId")
+	pollID, err := uuid.Parse(pollIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid poll ID"})
 		return
 	}
 
-	var req struct {
-		OptionID string `json:"option_id"`
-	}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
-		return
-	}
-
-	userIDStr, ok := auth.GetUserIDFromContext(c)
-	if !ok {
+	userID, exists := c.Get("userID")
+	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
 		return
 	}
 
@@ -239,7 +209,7 @@ func (h *Handler) CastVote(c *gin.Context) {
 		return
 	}
 
-	vote, err := h.Service.CastVote(pollID, optionID, userID)
+	vote, err := h.Service.CastVote(pollID, optionID, uuid.MustParse(userID.(string)))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to cast vote"})
 		return
@@ -249,29 +219,22 @@ func (h *Handler) CastVote(c *gin.Context) {
 }
 
 func (h *Handler) UncastVote(c *gin.Context) {
-	pollID, err := uuid.Parse(c.Param("pollId"))
+	var req VoteRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, utils.FormatValidationError(err))
+		return
+	}
+
+	pollIDStr := c.Param("pollId")
+	pollID, err := uuid.Parse(pollIDStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid poll ID"})
 		return
 	}
 
-	var req struct {
-		OptionID string `json:"option_id"`
-	}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
-		return
-	}
-
-	userIDStr, ok := auth.GetUserIDFromContext(c)
-	if !ok {
+	userID, exists := c.Get("userID")
+	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
 		return
 	}
 
@@ -281,9 +244,12 @@ func (h *Handler) UncastVote(c *gin.Context) {
 		return
 	}
 
-	err = h.Service.RemoveVote(pollID, optionID, userID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to uncast vote"})
+	if err := h.Service.RemoveVote(pollID, optionID, uuid.MustParse(userID.(string))); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			utils.ErrorResponse(c, http.StatusNotFound, "Vote not found.")
+		} else {
+			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to remove vote.")
+		}
 		return
 	}
 
