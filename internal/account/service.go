@@ -28,21 +28,22 @@ func NewService(db *sql.DB) *Service {
 }
 
 type UserProfile struct {
-	ID    uuid.UUID `json:"id"`
-	Name  string    `json:"name"`
-	Email string    `json:"email"`
+	ID            uuid.UUID `json:"id"`
+	Name          string    `json:"name"`
+	Email         string    `json:"email"`
+	PhoneNumber   *string   `json:"phone_number,omitempty"`
+	ProfilePicURL *string   `json:"profile_pic_url,omitempty"`
+	Bio           *string   `json:"bio,omitempty"`
+	LastLoginAt   *string   `json:"last_login_at,omitempty"`
 }
 
 func (s *Service) GetUserProfile(userID uuid.UUID) (*UserProfile, error) {
-	row := s.DB.QueryRow(`SELECT id, name, email FROM users WHERE id = $1`, userID)
+	row := s.DB.QueryRow(`SELECT id, name, email, phone_number, profile_pic_url, bio, last_login_at FROM users WHERE id = $1`, userID)
 
 	var profile UserProfile
-	err := db.ScanOne(row, &profile.ID, &profile.Name, &profile.Email)
+	err := db.ScanOne(row, &profile.ID, &profile.Name, &profile.Email, &profile.PhoneNumber, &profile.ProfilePicURL, &profile.Bio, &profile.LastLoginAt)
 	if err != nil {
 		return nil, err
-	}
-	if profile.ID == uuid.Nil {
-		return nil, sql.ErrNoRows
 	}
 	return &profile, nil
 }

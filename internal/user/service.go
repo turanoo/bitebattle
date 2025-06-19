@@ -27,9 +27,9 @@ func (s *Service) CreateUser(ctx context.Context, u *User) (*User, error) {
 	u.UpdatedAt = time.Now()
 
 	_, err := s.DB.ExecContext(ctx, `
-		INSERT INTO users (id, email, name, password_hash, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
-	`, u.ID, u.Email, u.Name, u.PasswordHash, u.CreatedAt, u.UpdatedAt)
+		INSERT INTO users (id, email, name, password_hash, phone_number, profile_pic_url, bio, last_login_at, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+	`, u.ID, u.Email, u.Name, u.PasswordHash, u.PhoneNumber, u.ProfilePicURL, u.Bio, u.LastLoginAt, u.CreatedAt, u.UpdatedAt)
 
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
@@ -44,11 +44,11 @@ func (s *Service) CreateUser(ctx context.Context, u *User) (*User, error) {
 func (s *Service) GetUserByID(ctx context.Context, id string) (*User, error) {
 	var u User
 	row := s.DB.QueryRowContext(ctx, `
-		SELECT id, email, name, password_hash, created_at, updated_at
+		SELECT id, email, name, password_hash, phone_number, profile_pic_url, bio, last_login_at, created_at, updated_at
 		FROM users WHERE id = $1
 	`, id)
 
-	err := db.ScanOne(row, &u.ID, &u.Email, &u.Name, &u.PasswordHash, &u.CreatedAt, &u.UpdatedAt)
+	err := db.ScanOne(row, &u.ID, &u.Email, &u.Name, &u.PasswordHash, &u.PhoneNumber, &u.ProfilePicURL, &u.Bio, &u.LastLoginAt, &u.CreatedAt, &u.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -61,11 +61,11 @@ func (s *Service) GetUserByID(ctx context.Context, id string) (*User, error) {
 func (s *Service) GetUserByEmail(ctx context.Context, email string) (*User, error) {
 	var u User
 	row := s.DB.QueryRowContext(ctx, `
-		SELECT id, email, name, password_hash, created_at, updated_at
+		SELECT id, email, name, password_hash, phone_number, profile_pic_url, bio, last_login_at, created_at, updated_at
 		FROM users WHERE email = $1
 	`, email)
 
-	err := db.ScanOne(row, &u.ID, &u.Email, &u.Name, &u.PasswordHash, &u.CreatedAt, &u.UpdatedAt)
+	err := db.ScanOne(row, &u.ID, &u.Email, &u.Name, &u.PasswordHash, &u.PhoneNumber, &u.ProfilePicURL, &u.Bio, &u.LastLoginAt, &u.CreatedAt, &u.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}

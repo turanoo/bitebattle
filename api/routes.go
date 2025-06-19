@@ -38,6 +38,8 @@ func SetupRoutes(router *gin.Engine, db *sql.DB) {
 	accountHandler := account.NewHandler(accountService)
 	protected.GET("/account", accountHandler.GetProfile)
 	protected.PUT("/account", accountHandler.UpdateProfile)
+	protected.POST("/account/profile-pic/upload-url", accountHandler.GetProfilePicUploadURL)
+	protected.GET("/account/profile-pic/access-url", accountHandler.GetProfilePicAccessURL)
 
 	pollService := poll.NewService(db)
 	pollHandler := poll.NewHandler(pollService)
