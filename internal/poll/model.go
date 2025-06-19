@@ -38,7 +38,7 @@ type PollResult struct {
 	OptionID   uuid.UUID   `json:"option_id"`
 	OptionName string      `json:"option_name"`
 	VoteCount  int         `json:"vote_count"`
-	VoterIDs   []uuid.UUID `json:"voter_ids" json:"-"`
+	VoterIDs   []uuid.UUID `json:"voter_ids"`
 }
 
 type PollSummary struct {

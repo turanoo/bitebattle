@@ -2,6 +2,7 @@ package head2head
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -25,7 +26,11 @@ func (m *Matcher) FindMutualLikes(matchID uuid.UUID) ([]Swipe, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			fmt.Printf("failed to close rows: %v\n", err)
+		}
+	}()
 
 	var matches []Swipe
 	for rows.Next() {
