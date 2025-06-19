@@ -2,6 +2,23 @@ name: Deploy to Cloud Run
 
 on:
   workflow_call:
+    secrets:
+      GCP_PROJECT:
+        required: true
+      GCP_SA_KEY:
+        required: true
+      INSTANCE_CONNECTION_NAME:
+        required: true
+      DB_USER:
+        required: true
+      DB_PASS:
+        required: true
+      DB_NAME:
+        required: true
+      JWT_SECRET:
+        required: true
+      GOOGLE_PLACES_API_KEY:
+        required: true
 
 env:
   IMAGE: gcr.io/${{ secrets.GCP_PROJECT }}/server
