@@ -4,6 +4,38 @@ BiteBattle is a Go-based RESTful API server powering the BiteBattle application.
 
 ---
 
+## API Overview
+
+### System Design
+
+#### Tech Stack
+
+- **Language:** Go (1.24+)
+- **Web Framework:** [Gin](https://github.com/gin-gonic/gin)
+- **Database:** PostgreSQL (managed via Docker Compose)
+- **ORM/DB Driver:** [lib/pq](https://github.com/lib/pq)
+- **Migrations:** [golang-migrate](https://github.com/golang-migrate/migrate)
+- **Authentication:** JWT (via [golang-jwt/jwt/v5](https://github.com/golang-jwt/jwt))
+- **Logging:** [logrus](https://github.com/sirupsen/logrus)
+- **Restaurant Search:** Google Places API
+
+#### Key Features
+
+- **JWT Authentication:** Secure endpoints with token-based auth.
+- **Role-based Polls:** Poll creators are "owners", others are "members".
+- **Head-to-Head Matches:** Invite and swipe for food matches.
+- **Notifications:** In-app notification system.
+- **Restaurant Search:** Google Places integration.
+- **Robust Logging:** Centralized, sanitized logging with logrus.
+
+---
+
+### Interactive API Docs
+
+You can preview the OpenAPI (Swagger) specification using this [link](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/turanoo/bitebattle/master/docs/api-spec.yaml).
+
+---
+
 ## Installation and Local Development
 
 ### Prerequisites
@@ -21,11 +53,10 @@ cd bitebattle
 
 ### 2. Configure Environment Variables
 
-Copy the example file and edit as needed:
+Create an env file and add the following information:
 
 ```sh
-cp .env.example .env
-# Edit .env with your desired DB credentials and your Google Places API Key if available
+touch .env
 ```
 
 **Example `.env`:**
@@ -37,6 +68,7 @@ DB_HOST=localhost
 DB_PORT=5432
 JWT_SECRET=your_jwt_secret
 GOOGLE_PLACES_API_KEY=your_google_places_api_key
+GCS_PROFILE_BUCKET=your_gcs_profile_pictures_storage_bucket
 ```
 
 ### 3. Start PostgreSQL with Docker Compose
@@ -75,64 +107,6 @@ make stop      # Stop containers
 make destroy   # Stop and remove volumes
 ```
 
----
-
-## API Overview
-
-### Interactive API Docs
-
-You can preview the OpenAPI (Swagger) specification using this [link](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/turanoo/bitebattle/master/docs/api-spec.yaml).
-
-## System Design
-
-### Tech Stack
-
-- **Language:** Go (1.24+)
-- **Web Framework:** [Gin](https://github.com/gin-gonic/gin)
-- **Database:** PostgreSQL (managed via Docker Compose)
-- **ORM/DB Driver:** [lib/pq](https://github.com/lib/pq)
-- **Migrations:** [golang-migrate](https://github.com/golang-migrate/migrate)
-- **Authentication:** JWT (via [golang-jwt/jwt/v5](https://github.com/golang-jwt/jwt))
-- **Logging:** [logrus](https://github.com/sirupsen/logrus)
-- **Restaurant Search:** Google Places API
-
-### Project Structure
-
-```
-bitebattle/
-├── api/                # Route setup
-├── cmd/server/         # Main entrypoint
-├── internal/
-│   ├── account/        # User profile management
-│   ├── auth/           # Auth logic and middleware
-│   ├── head2head/      # Head-to-head match logic
-│   ├── notification/   # Notification logic
-│   ├── poll/           # Polls, options, votes
-│   ├── restaurant/     # Restaurant search
-│   └── user/           # User CRUD
-├── migrations/         # SQL migration files
-├── pkg/
-│   ├── db/             # DB connection
-│   ├── logger/         # Logging utilities
-│   └── utils/          # Utility functions
-├── scripts/            # Helper scripts (e.g., run_migrations.sh)
-├── docker-compose.yml  # Postgres container config
-├── Makefile            # Dev commands
-├── go.mod
-├── go.sum
-└── README.md
-```
-
-### Key Features
-
-- **JWT Authentication:** Secure endpoints with token-based auth.
-- **Role-based Polls:** Poll creators are "owners", others are "members".
-- **Head-to-Head Matches:** Invite and swipe for food matches.
-- **Notifications:** In-app notification system.
-- **Restaurant Search:** Google Places integration.
-- **Robust Logging:** Centralized, sanitized logging with logrus.
-
----
 
 ## Contributing
 
