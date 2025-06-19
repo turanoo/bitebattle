@@ -1,0 +1,641 @@
+openapi: 3.0.3
+info:
+  title: BiteBattle API
+  version: 1.0.0
+  description: REST APIs for BiteBattle, a head-to-head restaurant selection app.
+tags:
+  - name: Auth
+    description: Authentication and registration
+  - name: User
+    description: User management
+  - name: Account
+    description: Account/profile management
+  - name: Poll
+    description: Poll management
+  - name: Restaurant
+    description: Restaurant search
+  - name: Head2Head
+    description: Head2Head match functionality
+
+paths:
+  /v1/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            examples:
+              valid:
+                value: { "email": "user@example.com", "password": "StrongPass1!", "name": "Alice" }
+      responses:
+        '201':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+              examples:
+                success:
+                  value: { "token": "jwt_token_here" }
+        '400':
+          description: Validation or weak password
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                validation:
+                  value: { "error": "email is required" }
+                weak:
+                  value: { "error": "password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character" }
+        '409':
+          description: User already exists
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                exists:
+                  value: { "error": "User with this email already exists." }
+
+  /v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              valid:
+                value: { "email": "user@example.com", "password": "StrongPass1!" }
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+              examples:
+                success:
+                  value: { "token": "jwt_token_here" }
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+              examples:
+                invalid:
+                  value: { "error": "invalid email or password" }
+
+  /v1/users/{id}:
+    get:
+      tags: [User]
+      summary: Get user by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /v1/users:
+    get:
+      tags: [User]
+      summary: Get user by email
+      parameters:
+        - in: query
+          name: email
+          required: true
+          schema: { type: string, format: email }
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400':
+          description: Missing email
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+    post:
+      tags: [User]
+      summary: Create user (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/User' }
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '409':
+          description: User already exists
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /v1/account:
+    get:
+      tags: [Account]
+      summary: Get current user's profile
+      responses:
+        '200':
+          description: Profile found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserProfile' }
+        '400':
+          description: Invalid user id
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+    put:
+      tags: [Account]
+      summary: Update profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateProfileRequest' }
+      responses:
+        '200':
+          description: Profile updated
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /v1/polls:
+    post:
+      tags: [Poll]
+      summary: Create a poll
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreatePollRequest' }
+      responses:
+        '201':
+          description: Poll created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Poll' }
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+    get:
+      tags: [Poll]
+      summary: Get all polls for user
+      responses:
+        '200':
+          description: List of polls
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Poll' }
+
+  /v1/polls/{pollId}/join:
+    post:
+      tags: [Poll]
+      summary: Join a poll by invite code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/JoinPollRequest' }
+      responses:
+        '200':
+          description: Joined poll
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Poll' }
+        '400':
+          description: Invalid invite code
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /v1/polls/{pollId}:
+    get:
+      tags: [Poll]
+      summary: Get poll by ID
+      parameters:
+        - in: path
+          name: pollId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Poll found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Poll' }
+        '404':
+          description: Poll not found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+    put:
+      tags: [Poll]
+      summary: Update poll
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdatePollRequest' }
+      responses:
+        '200':
+          description: Poll updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Poll' }
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+    delete:
+      tags: [Poll]
+      summary: Delete poll
+      responses:
+        '204':
+          description: Poll deleted
+        '404':
+          description: Poll not found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /v1/polls/{pollId}/options:
+    post:
+      tags: [Poll]
+      summary: Add options to poll
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AddOptionRequest' }
+      responses:
+        '201':
+          description: Options added
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/PollOption' }
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /v1/polls/{pollId}/vote:
+    post:
+      tags: [Poll]
+      summary: Cast a vote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VoteRequest' }
+      responses:
+        '200':
+          description: Vote cast
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PollVote' }
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /v1/polls/{pollId}/unvote:
+    post:
+      tags: [Poll]
+      summary: Remove a vote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VoteRequest' }
+      responses:
+        '204':
+          description: Vote removed
+        '404':
+          description: Vote not found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /v1/polls/{pollId}/results:
+    get:
+      tags: [Poll]
+      summary: Get poll results
+      responses:
+        '200':
+          description: Poll results
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/PollResult' }
+
+  /v1/restaurants/search:
+    get:
+      tags: [Restaurant]
+      summary: Search for restaurants
+      parameters:
+        - in: query
+          name: query
+          required: true
+          schema: 
+            type: string
+      responses:
+        '200':
+          description: List of restaurants
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: { type: string }
+                    name: { type: string }
+                    address: { type: string }
+                    rating: { type: number }
+                    image_url: { type: string }
+
+  /v1/h2h/match:
+    post:
+      tags: [Head2Head]
+      summary: Create a head2head match
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateMatchRequest' }
+      responses:
+        '201':
+          description: Match created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Match' }
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /v1/h2h/match/{id}/accept:
+    post:
+      tags: [Head2Head]
+      summary: Accept a match
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Match accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+              examples:
+                accepted:
+                  value: { "message": "match accepted" }
+
+  /v1/h2h/match/{id}/swipe:
+    post:
+      tags: [Head2Head]
+      summary: Submit a swipe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SubmitSwipeRequest' }
+      responses:
+        '200':
+          description: Swipe recorded
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Swipe' }
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /v1/h2h/match/{id}/results:
+    get:
+      tags: [Head2Head]
+      summary: Get match results
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Mutual likes
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Swipe' }
+
+components:
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [email, password, name]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+        name: { type: string }
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string }
+        name: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    UserProfile:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        email: { type: string }
+    UpdateProfileRequest:
+      type: object
+      required: [name, email]
+      properties:
+        name: { type: string }
+        email: { type: string, format: email }
+    CreatePollRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+    JoinPollRequest:
+      type: object
+      required: [invite_code]
+      properties:
+        invite_code: { type: string }
+    UpdatePollRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+    AddOptionRequest:
+      type: array
+      items:
+        type: object
+        required: [restaurant_id, name]
+        properties:
+          restaurant_id: { type: string }
+          name: { type: string }
+          image_url: { type: string }
+          menu_url: { type: string }
+    VoteRequest:
+      type: object
+      required: [option_id]
+      properties:
+        option_id: { type: string, format: uuid }
+    Poll:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        invite_code: { type: string }
+        role: { type: string }
+        members:
+          type: array
+          items: { type: string, format: uuid }
+        created_by: { type: string, format: uuid }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    PollOption:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        poll_id: { type: string, format: uuid }
+        restaurant_id: { type: string }
+        name: { type: string }
+        image_url: { type: string }
+        menu_url: { type: string }
+    PollVote:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        poll_id: { type: string, format: uuid }
+        option_id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        created_at: { type: string, format: date-time }
+    PollResult:
+      type: object
+      properties:
+        option_id: { type: string, format: uuid }
+        option_name: { type: string }
+        vote_count: { type: integer }
+        voter_ids:
+          type: array
+          items: { type: string, format: uuid }
+    CreateMatchRequest:
+      type: object
+      required: [invitee_id, categories]
+      properties:
+        invitee_id: { type: string, format: uuid }
+        categories:
+          type: array
+          items: { type: string }
+    SubmitSwipeRequest:
+      type: object
+      required: [restaurant_id, restaurant_name, liked]
+      properties:
+        restaurant_id: { type: string }
+        restaurant_name: { type: string }
+        liked: { type: boolean }
+    Match:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        inviter_id: { type: string, format: uuid }
+        invitee_id: { type: string, format: uuid }
+        status: { type: string }
+        categories:
+          type: array
+          items: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    Swipe:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        match_id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        restaurant_id: { type: string }
+        restaurant_name: { type: string }
+        liked: { type: boolean }
+        created_at: { type: string, format: date-time }
+    ErrorResponse:
+      type: object
+      properties:
+        error: { type: string }
