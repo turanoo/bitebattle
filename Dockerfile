@@ -26,7 +26,6 @@ RUN wget -O migrate.tar.gz https://github.com/golang-migrate/migrate/releases/do
 
 COPY --from=builder /app/server ./server
 COPY migrations ./migrations
-COPY config ./config
 COPY scripts/run_migrations.sh ./run_migrations.sh
 
 RUN chmod +x ./run_migrations.sh
