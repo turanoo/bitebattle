@@ -5,7 +5,6 @@ on:
     branches: [master]
     paths-ignore:
       - 'README.md'
-      - 'swagger.yaml'
       - 'Makefile'
       - '.github/**'
       - 'docs/**'
@@ -13,7 +12,6 @@ on:
     branches: [master]
     paths-ignore:
       - 'README.md'
-      - 'swagger.yaml'
       - 'Makefile'
       - '.github/**'
       - 'docs/**'

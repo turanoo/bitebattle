@@ -79,34 +79,9 @@ make destroy   # Stop and remove volumes
 
 ## API Overview
 
-See the code in `internal/*/handler.go` for full details.  
-All available endpoints:
+### Interactive API Docs
 
-| Endpoint                                 | Method | Description                                 |
-|-------------------------------------------|--------|---------------------------------------------|
-| `/api/auth/register`                     | POST   | Register a new user                         |
-| `/api/auth/login`                        | POST   | User login                                  |
-| `/api/account`                           | GET    | Get user profile                            |
-| `/api/account`                           | PUT    | Update user profile                         |
-| `/api/users/:id`                         | GET    | Get user by ID                              |
-| `/api/users/?email=`                     | GET    | Get user by email                           |
-| `/api/polls`                             | POST   | Create a poll                               |
-| `/api/polls`                             | GET    | List polls for user                         |
-| `/api/polls/:pollId/join`                | POST   | Join a poll by invite code                  |
-| `/api/polls/:pollId`                     | GET    | Get poll details                            |
-| `/api/polls/:pollId`                     | DELETE | Delete a poll                               |
-| `/api/polls/:pollId/options`             | POST   | Add one or more options to a poll           |
-| `/api/polls/:pollId/vote`                | POST   | Cast a vote                                 |
-| `/api/polls/:pollId/unvote`              | POST   | Remove a vote                               |
-| `/api/polls/:pollId/results`             | GET    | Get poll results                            |
-| `/api/notifications`                     | GET    | Get user notifications                      |
-| `/api/h2h/match`                         | POST   | Create head-to-head match                   |
-| `/api/h2h/match/:id/accept`              | POST   | Accept a head-to-head match                 |
-| `/api/h2h/match/:id/swipe`               | POST   | Submit a swipe for a match                  |
-| `/api/h2h/match/:id/results`             | GET    | Get mutual likes for a match                |
-| `/api/restaurants/search`                | GET    | Search restaurants (Google Places)          |
-
----
+You can preview the OpenAPI (Swagger) specification using [Swagger Editor](https://editor.swagger.io/?url=https://github.com/turanoo/bitebattle/raw/main/docs/api-spec.yaml).
 
 ## System Design
 
@@ -159,116 +134,20 @@ bitebattle/
 
 ---
 
-## Database Schema UML
-
-### Users, Polls, Poll Members, Poll Options, Poll Votes, Notifications
-
-```
-+---------------------+
-|       users         |
-+---------------------+
-| id (PK, UUID)       |
-| email (UNIQUE)      |
-| name                |
-| password_hash       |
-| created_at (TS)     |
-| updated_at (TS)     |
-+---------------------+
-         ▲
-         │
-+----------------------+
-|   polls_members      |
-+----------------------+
-| id (PK, UUID)        |
-| poll_id (FK→polls)   |
-| user_id (FK→users)   |
-| joined_at (TS)       |
-| UNIQUE(poll_id, user_id)
-+----------------------+
-         ▲
-         │
-+----------------------+
-|       polls          |
-+----------------------+
-| id (PK, UUID)        |
-| name                 |
-| invite_code (UNIQUE) |
-| created_by (FK→users)|
-| is_active (bool)     |
-| created_at (TS)      |
-| updated_at (TS)      |
-+----------------------+
-         │
-         ▼
-+----------------------+
-|    poll_options      |
-+----------------------+
-| id (PK, UUID)        |
-| poll_id (FK→polls)   |
-| restaurant_id        |
-| name                 |
-| image_url            |
-| menu_url             |
-| UNIQUE(poll_id, restaurant_id)
-+----------------------+
-         │
-         ▼
-+----------------------+
-|     poll_votes       |
-+----------------------+
-| id (PK, UUID)        |
-| poll_id (FK→polls)   |
-| option_id (FK→poll_options) |
-| user_id (FK→users)   |
-| created_at (TS)      |
-| UNIQUE(poll_id, user_id, option_id)
-+----------------------+
-
-+----------------------+
-|   notifications      |
-+----------------------+
-| id (PK, UUID)        |
-| user_id (FK→users)   |
-| message              |
-| read (bool)          |
-| created_at (TS)      |
-+----------------------+
-```
-
-### Head2Head Matches & Swipes
-
-```
-+--------------------------+
-|   head2head_matches      |
-+--------------------------+
-| id (PK, UUID)            |
-| inviter_id (FK→users)    |
-| invitee_id (FK→users)    |
-| status                   |
-| categories (TEXT[])      |
-| created_at (TS)          |
-| updated_at (TS)          |
-+--------------------------+
-        ▲
-        │
-+--------------------------+
-|   head2head_swipes       |
-+--------------------------+
-| id (PK, UUID)            |
-| match_id (FK→head2head_matches) |
-| user_id (FK→users)       |
-| restaurant_id            |
-| restaurant_name          |
-| liked (bool)             |
-| created_at (TS)          |
-+--------------------------+
-```
-
----
-
 ## Contributing
 
 Contributions are welcome! Please submit a pull request or open an issue for any suggestions or improvements.
+
+### Development Guidelines
+
+Before opening a merge request (MR) against the master branch, ensure that the following commands complete successfully:
+
+```sh
+make lint   # Run code linters
+make test   # Run all tests
+```
+
+This helps maintain code quality and stability.
 
 ---
 
