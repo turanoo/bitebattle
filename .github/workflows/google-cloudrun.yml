@@ -1,12 +1,8 @@
 name: Deploy to Cloud Run
 
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types:
-      - completed
-    branches:
-      - master
+  workflow_call:
+
 env:
   IMAGE: gcr.io/${{ secrets.GCP_PROJECT }}/server
   REGION: us-central1
@@ -14,7 +10,6 @@ env:
 
 jobs:
   deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -24,7 +19,11 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Configure Docker for GCR
         run: gcloud auth configure-docker
