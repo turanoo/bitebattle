@@ -17,45 +17,49 @@ func SetupRoutes(router *gin.Engine, db *sql.DB) {
 
 	userService := user.NewService(db)
 	userHandler := user.NewHandler(userService)
-	api.GET("/users/:id", userHandler.GetUser)
-	api.GET("/users", userHandler.GetUserByQuery)
-	api.POST("/users", userHandler.CreateUser)
-
 	authHandler := auth.NewHandler(userService)
-	api.POST("/auth/register", authHandler.Register)
-	api.POST("/auth/login", authHandler.Login)
 
-	pollService := poll.NewService(db)
-	pollHandler := poll.NewHandler(pollService)
-	api.POST("/polls", pollHandler.CreatePoll)
-	api.GET("/polls", pollHandler.GetPolls)
-	api.POST("/polls/:pollId/join", pollHandler.JoinPoll)
-	api.GET("/polls/:pollId", pollHandler.GetPoll)
-	api.DELETE("/polls/:pollId", pollHandler.DeletePoll)
-	api.PUT("/polls/:pollId", pollHandler.UpdatePoll)
-	api.POST("/polls/:pollId/options", pollHandler.AddOption)
-	api.POST("/polls/:pollId/vote", pollHandler.CastVote)
-	api.POST("/polls/:pollId/unvote", pollHandler.UncastVote)
-	api.GET("/polls/:pollId/results", pollHandler.GetResults)
-
-	restaurantService := restaurant.NewService()
-	restaurantHandler := restaurant.NewHandler(restaurantService)
-	api.GET("/restaurants/search", restaurantHandler.SearchRestaurants)
-
-	accountService := account.NewService(db)
-	accountHandler := account.NewHandler(accountService)
-	api.GET("/account", accountHandler.GetProfile)
-	api.PUT("/account", accountHandler.UpdateProfile)
-
-	h2hService := head2head.NewService(db)
-	h2hHandler := head2head.NewHandler(h2hService)
-	api.POST("/h2h/match", h2hHandler.CreateMatch)
-	api.POST("/h2h/match/:id/accept", h2hHandler.AcceptMatch)
-	api.POST("/h2h/match/:id/swipe", h2hHandler.SubmitSwipe)
-	api.GET("/h2h/match/:id/results", h2hHandler.GetMatchResults)
-
-	// Health check route
+	// Public routes
 	api.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
+	api.POST("/auth/register", authHandler.Register)
+	api.POST("/auth/login", authHandler.Login)
+
+	// Protected routes
+	protected := api.Group("")
+	protected.Use(auth.AuthMiddleware())
+
+	protected.GET("/users/:id", userHandler.GetUser)
+	protected.GET("/users", userHandler.GetUserByQuery)
+	protected.POST("/users", userHandler.CreateUser)
+
+	accountService := account.NewService(db)
+	accountHandler := account.NewHandler(accountService)
+	protected.GET("/account", accountHandler.GetProfile)
+	protected.PUT("/account", accountHandler.UpdateProfile)
+
+	pollService := poll.NewService(db)
+	pollHandler := poll.NewHandler(pollService)
+	protected.POST("/polls", pollHandler.CreatePoll)
+	protected.GET("/polls", pollHandler.GetPolls)
+	protected.POST("/polls/:pollId/join", pollHandler.JoinPoll)
+	protected.GET("/polls/:pollId", pollHandler.GetPoll)
+	protected.DELETE("/polls/:pollId", pollHandler.DeletePoll)
+	protected.PUT("/polls/:pollId", pollHandler.UpdatePoll)
+	protected.POST("/polls/:pollId/options", pollHandler.AddOption)
+	protected.POST("/polls/:pollId/vote", pollHandler.CastVote)
+	protected.POST("/polls/:pollId/unvote", pollHandler.UncastVote)
+	protected.GET("/polls/:pollId/results", pollHandler.GetResults)
+
+	restaurantService := restaurant.NewService()
+	restaurantHandler := restaurant.NewHandler(restaurantService)
+	protected.GET("/restaurants/search", restaurantHandler.SearchRestaurants)
+
+	h2hService := head2head.NewService(db)
+	h2hHandler := head2head.NewHandler(h2hService)
+	protected.POST("/h2h/match", h2hHandler.CreateMatch)
+	protected.POST("/h2h/match/:id/accept", h2hHandler.AcceptMatch)
+	protected.POST("/h2h/match/:id/swipe", h2hHandler.SubmitSwipe)
+	protected.GET("/h2h/match/:id/results", h2hHandler.GetMatchResults)
 }
