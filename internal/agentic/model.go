@@ -1,10 +1,10 @@
 package agentic
 
-type AgenticCommandRequest struct {
+type AgenticRequest struct {
 	Command string `json:"command" binding:"required"`
 }
 
-type AgenticCommandResponse struct {
+type AgenticResponse struct {
 	Success bool        `json:"success"`
 	Message string      `json:"message"`
 	Data    interface{} `json:"data,omitempty"`

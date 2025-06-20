@@ -13,9 +13,7 @@ import (
 )
 
 type VertexAIClient struct {
-	ProjectID string
-	Location  string
-	Model     string
+	Url       string
 	AuthToken string
 }
 
@@ -24,16 +22,14 @@ func NewVertexAIClient() *VertexAIClient {
 	location := os.Getenv("VERTEX_LOCATION")
 	model := os.Getenv("VERTEX_MODEL")
 	token := os.Getenv("VERTEX_AUTH_TOKEN")
+	url := fmt.Sprintf("https://%s-aiplatform.googleapis.com/v1beta1/projects/%s/locations/%s/publishers/google/models/%s:generateContent", location, projectID, location, model)
 	return &VertexAIClient{
-		ProjectID: projectID,
-		Location:  location,
-		Model:     model,
+		Url:       url,
 		AuthToken: token,
 	}
 }
 
 func (v *VertexAIClient) SendCommand(ctx context.Context, command string) (*ParsedPrompt, error) {
-	url := fmt.Sprintf("https://%s-aiplatform.googleapis.com/v1beta1/projects/%s/locations/%s/publishers/google/models/%s:generateContent", v.Location, v.ProjectID, v.Location, v.Model)
 	requestBody := map[string]interface{}{
 		"contents": []map[string]interface{}{
 			{
@@ -46,7 +42,7 @@ func (v *VertexAIClient) SendCommand(ctx context.Context, command string) (*Pars
 	}
 	body, _ := json.Marshal(requestBody)
 
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, "POST", v.Url, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
@@ -91,11 +87,9 @@ func (v *VertexAIClient) SendCommand(ctx context.Context, command string) (*Pars
 	return &intent, nil
 }
 
-// stripCodeBlock removes code block markers and trims whitespace.
 func stripCodeBlock(s string) string {
 	s = strings.TrimSpace(s)
 	if strings.HasPrefix(s, "```") {
-		// Remove triple backticks and optional language
 		lines := strings.SplitN(s, "\n", 2)
 		if len(lines) == 2 {
 			s = lines[1]
@@ -105,7 +99,7 @@ func stripCodeBlock(s string) string {
 			s = s[:idx]
 		}
 	}
-	s = strings.Trim(s, "`") // Remove any stray single backticks
+	s = strings.Trim(s, "`")
 	return strings.TrimSpace(s)
 }
 

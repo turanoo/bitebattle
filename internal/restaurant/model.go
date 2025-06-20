@@ -1,5 +1,10 @@
 package restaurant
 
+type GooglePlacesResponse struct {
+	Results []Place `json:"results"`
+	Status  string  `json:"status"`
+}
+
 type Place struct {
 	Name    string  `json:"name"`
 	Address string  `json:"address"`

@@ -69,5 +69,5 @@ func SetupRoutes(router *gin.Engine, db *sql.DB) {
 	agenticVertex := agentic.NewVertexAIClient()
 	agenticService := agentic.NewService(agenticVertex, *pollService, *restaurantService)
 	agenticHandler := agentic.NewHandler(agenticService)
-	protected.POST("/agentic/command", agenticHandler.AgenticCommandHandler)
+	protected.POST("/agentic/command", agenticHandler.Command)
 }

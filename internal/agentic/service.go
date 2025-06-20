@@ -39,13 +39,6 @@ func (s *Service) OrchestrateCommand(ctx context.Context, userID uuid.UUID, comm
 		return nil, fmt.Errorf("could not extract location from command")
 	}
 
-	title := food + " poll"
-	poll, err := s.Poll.CreatePoll(title, userID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create poll: %w", err)
-	}
-
-	// Step 2: Search for restaurants
 	places, err := s.Rest.SearchRestaurants(food, location, "5000")
 	if err != nil {
 		return nil, fmt.Errorf("failed to search restaurants: %w", err)
@@ -54,6 +47,13 @@ func (s *Service) OrchestrateCommand(ctx context.Context, userID uuid.UUID, comm
 	if len(places) < maxOptions {
 		maxOptions = len(places)
 	}
+
+	title := food + " poll"
+	poll, err := s.Poll.CreatePoll(title, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create poll: %w", err)
+	}
+
 	var addedOptions []string
 	for i := 0; i < maxOptions; i++ {
 		place := places[i]

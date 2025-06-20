@@ -1,0 +1,26 @@
+application:
+  name: BiteBattle
+  version: 1.0.0
+  environment: prod
+  jwt_secret: gcp-secret://projects/612596290944/secrets/JWT_SECRET/versions/latest
+
+db:
+  host: gcp-secret://projects/612596290944/secrets/DB_HOST/versions/latest
+  port: gcp-secret://projects/612596290944/secrets/DB_PORT/versions/latest
+  user: gcp-secret://projects/612596290944/secrets/DB_USER/versions/latest
+  pass: gcp-secret://projects/612596290944/secrets/DB_PASS/versions/latest
+  name: gcp-secret://projects/612596290944/secrets/DB_NAME/versions/latest
+
+gcs:
+  profile_bucket: gcp-secret://projects/612596290944/secrets/GCS_PROFILE_BUCKET/versions/latest
+  object_url: https://storage.googleapis.com/
+
+google_places:
+  api_key: gcp-secret://projects/612596290944/secrets/GOOGLE_PLACES_API_KEY/versions/latest
+  api_endpoint: gcp-secret://projects/612596290944/secrets/GOOGLE_PLACES_API_ENDPOINT/versions/latest
+
+vertex:
+  project_id: gcp-secret://projects/612596290944/secrets/VERTEX_PROJECT_ID/versions/latest
+  location: gcp-secret://projects/612596290944/secrets/VERTEX_LOCATION/versions/latest
+  model: gcp-secret://projects/612596290944/secrets/VERTEX_MODEL/versions/latest
+  auth_token: gcp-secret://projects/612596290944/secrets/VERTEX_AUTH_TOKEN/versions/latest
