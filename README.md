@@ -1,6 +1,6 @@
 # BiteBattle
 
-BiteBattle is a Go-based RESTful API server powering the BiteBattle application. It manages user authentication, polls, voting, notifications, head-to-head matches, and restaurant search, providing a robust backend for collaborative food decision-making.
+BiteBattle is a Go-based RESTful API server powering the BiteBattle application. It manages user authentication, polls, voting, notifications, head-to-head matches, restaurant search, and user profile management (including profile pictures), providing a robust backend for collaborative food decision-making.
 
 ---
 
@@ -18,21 +18,27 @@ BiteBattle is a Go-based RESTful API server powering the BiteBattle application.
 - **Authentication:** JWT (via [golang-jwt/jwt/v5](https://github.com/golang-jwt/jwt))
 - **Logging:** [logrus](https://github.com/sirupsen/logrus)
 - **Restaurant Search:** Google Places API
+- **Object Storage:** Google Cloud Storage (for user profile pictures)
+- **Testing:** Go built-in testing framework
+- **Linting:** golangci-lint
 
 #### Key Features
 
 - **JWT Authentication:** Secure endpoints with token-based auth.
+- **User Profiles:** Manage user info, phone, and profile pictures (stored in GCS).
+- **Secure Image Uploads:** Direct, signed URL uploads to Google Cloud Storage.
 - **Role-based Polls:** Poll creators are "owners", others are "members".
 - **Head-to-Head Matches:** Invite and swipe for food matches.
 - **Notifications:** In-app notification system.
 - **Restaurant Search:** Google Places integration.
 - **Robust Logging:** Centralized, sanitized logging with logrus.
+- **API-First:** OpenAPI (Swagger) documented endpoints.
 
 ---
 
 ### Interactive API Docs
 
-You can preview the OpenAPI (Swagger) specification using this [link](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/turanoo/bitebattle/master/docs/api-spec.yaml).
+You can preview the OpenAPI (Swagger) specification using this [link](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/turanoo/bitebattle/main/docs/api-spec.yaml).
 
 ---
 
@@ -73,39 +79,12 @@ GCS_PROFILE_BUCKET=your_gcs_profile_pictures_storage_bucket
 
 ### 3. Start PostgreSQL with Docker Compose
 
-Ensure your Docker daemon is prior to executing the next steps!
-Skip to step 6 if you want to run the next 3 commands in one go. 
-
-```sh
-make up
-```
-
-### 4. Run Database Migrations
-
-```sh
-make migrate
-```
-
-### 5. Run the Backend Server
-
-```sh
-make run
-# or
-go run cmd/server/main.go
-```
-
-### 6. Full Local Dev Workflow
+Ensure your Docker daemon is running prior to executing the next steps!
 
 ```sh
 make dev
 ```
-
-### 7. Stopping and Cleaning Up
-
-```sh
-make stop      # Stop containers
-make destroy   # Stop and remove volumes
-```
+Refer to the `Makefile` for full list of commands
 
 
 ## Contributing
@@ -124,7 +103,3 @@ make test   # Run all tests
 This helps maintain code quality and stability.
 
 ---
-
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for more details.

@@ -1,11 +1,10 @@
 # Set environment variables
-ENV_FILE = .env
 COMPOSE = docker-compose
-DB_CONTAINER = bitebattle-db
 
 
 # Default target
-.PHONY: help
+.PHONY: help up migrate run dev stop destroy build fresh docker-build docker-push lint test
+
 help:
 	@echo "Available commands:"
 	@echo "  make up              Start Postgres container"
@@ -15,54 +14,44 @@ help:
 	@echo "  make stop            Stop containers"
 	@echo "  make destroy         Stop and destroy containers (data will be deleted from db)"
 	@echo "  make build           Build Go binary"
+	@echo "  make fresh           Stop, destroy, start, migrate, and run"
 	@echo "  make lint            Run golangci-lint to check code quality"
 	@echo "  make test            Run tests"
+	@echo "  make docker-build    Build Docker image for the server"
+	@echo "  make docker-push     Push Docker image to Google Container Registry"
 
-.PHONY: up
 up:
 	$(COMPOSE) up -d db
 	@echo "Waiting for Postgres to be ready..."
 	@sleep 5
 
-.PHONY: migrate
 migrate:
 	bash scripts/run_migrations.sh
 
-.PHONY: run
 run:
 	go run cmd/server/main.go
 
-.PHONY: dev
 dev: up migrate run
 
-.PHONY: stop
 stop:
 	$(COMPOSE) down
 
-.PHONY: destroy
 destroy:
 	$(COMPOSE) down -v
 
-.PHONY: build
 build:
 	go build -o bin/server cmd/server/main.go
 
+lint:
+	golangci-lint run ./...
 
-.PHONY: debug
-debug: destroy up migrate
+test:
+	cd tests && go test ./... && cd ..
 
-.PHONY: docker-build
+fresh: destroy up migrate run
+
 docker-build:
 	docker build -t gcr.io/bitebattle/server .
 
-.PHONY: docker-push
 docker-push:
 	docker push gcr.io/bitebattle/server
-
-.PHONY: lint
-build:
-	golangci-lint run ./...
-
-.PHONY: test
-build:
-	cd tests && go test ./... && cd ..
