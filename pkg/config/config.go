@@ -94,7 +94,12 @@ func resolveGCPSecrets(ctx context.Context, cfg *Config) error {
 	if err != nil {
 		return err
 	}
-	defer client.Close()
+	defer func() {
+		cerr := client.Close()
+		if cerr != nil {
+			fmt.Fprintf(os.Stderr, "failed to close secretmanager client: %v\n", cerr)
+		}
+	}()
 
 	resolve := func(val string) (string, error) {
 		if !strings.HasPrefix(val, "gcp-secret://") {
