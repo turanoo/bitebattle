@@ -60,7 +60,7 @@ cd bitebattle
 
 ### 2. Configure Environment Variables
 
-Modify the provided `.env_sample` with your values and rename it to `.env` for local development
+Modify the provided `config/sample.yaml` with your values and rename it to `config/local.yaml` for local development
 
 ### 3. Running locally
 
