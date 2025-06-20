@@ -2,26 +2,26 @@ application:
   name: BiteBattle
   version: 1.0.0
   environment: prod
-  jwt_secret: gcp-secret://projects/612596290944/secrets/config/JWT_SECRET/versions/latest
+  jwt_secret: gcp-secret://projects/612596290944/secrets/JWT_SECRET/versions/latest
 
 db:
-  host: gcp-secret://projects/612596290944/secrets/config/DB_HOST/versions/latest
-  port: gcp-secret://projects/612596290944/secrets/config/DB_PORT/versions/latest
-  user: gcp-secret://projects/612596290944/secrets/config/DB_USER/versions/latest
-  pass: gcp-secret://projects/612596290944/secrets/config/DB_PASS/versions/latest
-  name: gcp-secret://projects/612596290944/secrets/config/DB_NAME/versions/latest
-  instance_connection_name: gcp-secret://projects/612596290944/secrets/config/INSTANCE_CONNECTION_NAME/versions/latest
+  host: gcp-secret://projects/612596290944/secrets/DB_HOST/versions/latest
+  port: gcp-secret://projects/612596290944/secrets/DB_PORT/versions/latest
+  user: gcp-secret://projects/612596290944/secrets/DB_USER/versions/latest
+  pass: gcp-secret://projects/612596290944/secrets/DB_PASS/versions/latest
+  name: gcp-secret://projects/612596290944/secrets/DB_NAME/versions/latest
+  instance_connection_name: gcp-secret://projects/612596290944/secrets/INSTANCE_CONNECTION_NAME/versions/latest
 
 gcs:
-  profile_bucket: gcp-secret://projects/612596290944/secrets/config/GCS_PROFILE_BUCKET/versions/latest
+  profile_bucket: gcp-secret://projects/612596290944/secrets/GCS_PROFILE_BUCKET/versions/latest
   object_url: https://storage.googleapis.com/
 
 google_places:
-  api_key: gcp-secret://projects/612596290944/secrets/config/GOOGLE_PLACES_API_KEY/versions/latest
+  api_key: gcp-secret://projects/612596290944/secrets/GOOGLE_PLACES_API_KEY/versions/latest
   api_endpoint: https://maps.googleapis.com/maps/api/place/textsearch/json
 
 vertex:
-  project_id: gcp-secret://projects/612596290944/secrets/config/VERTEX_PROJECT_ID/versions/latest
-  location: gcp-secret://projects/612596290944/secrets/config/VERTEX_LOCATION/versions/latest
-  model: gcp-secret://projects/612596290944/secrets/config/VERTEX_MODEL/versions/latest
-  auth_token: gcp-secret://projects/612596290944/secrets/config/VERTEX_AUTH_TOKEN/versions/latest
+  project_id: bitebattle
+  location: us-central1
+  model: gemini-2.0-flash-001
+  auth_token: gcp-secret://projects/612596290944/secrets/VERTEX_AUTH_TOKEN/versions/latest

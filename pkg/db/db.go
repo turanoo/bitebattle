@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"os"
 
 	_ "github.com/lib/pq"
 	"github.com/turanoo/bitebattle/pkg/config"
@@ -13,7 +12,7 @@ import (
 var db *sql.DB
 
 func Init(cfg *config.Config) error {
-	instanceConnName := os.Getenv("INSTANCE_CONNECTION_NAME") // Still from env for Cloud SQL
+	instanceConnName := cfg.DB.InstanceConn
 	user := cfg.DB.User
 	password := cfg.DB.Pass
 	dbName := cfg.DB.Name

@@ -63,7 +63,7 @@ func parentDir(path string) string {
 }
 
 func LoadConfig(ctx context.Context, configDir string) (*Config, error) {
-	osEnv := os.Getenv("ENV")
+	osEnv := os.Getenv("OSENV")
 	if osEnv == "" {
 		osEnv = "local"
 	}

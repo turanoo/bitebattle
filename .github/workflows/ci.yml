@@ -73,11 +73,5 @@ jobs:
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     uses: ./.github/workflows/google-cloudrun.yml
     secrets:
-      GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
       INSTANCE_CONNECTION_NAME: ${{ secrets.INSTANCE_CONNECTION_NAME }}
-      DB_USER: ${{ secrets.DB_USER }}
-      DB_PASS: ${{ secrets.DB_PASS }}
-      DB_NAME: ${{ secrets.DB_NAME }}
-      JWT_SECRET: ${{ secrets.JWT_SECRET }}
-      GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
