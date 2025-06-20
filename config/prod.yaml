@@ -5,8 +5,8 @@ application:
   jwt_secret: gcp-secret://projects/612596290944/secrets/JWT_SECRET/versions/latest
 
 db:
-  host: gcp-secret://projects/612596290944/secrets/DB_HOST/versions/latest
-  port: gcp-secret://projects/612596290944/secrets/DB_PORT/versions/latest
+  host: ""
+  port: ""
   user: gcp-secret://projects/612596290944/secrets/DB_USER/versions/latest
   pass: gcp-secret://projects/612596290944/secrets/DB_PASS/versions/latest
   name: gcp-secret://projects/612596290944/secrets/DB_NAME/versions/latest
