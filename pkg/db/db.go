@@ -62,3 +62,19 @@ func Init(cfg *config.Config) error {
 func GetDB() *sql.DB {
 	return db
 }
+
+// GetPostgresURL returns a postgres:// URL for use with golang-migrate
+func GetPostgresURL(cfg *config.Config) string {
+	user := cfg.DB.User
+	password := cfg.DB.Pass
+	host := cfg.DB.Host
+	port := cfg.DB.Port
+	dbName := cfg.DB.Name
+	if host == "" {
+		host = "localhost"
+	}
+	if port == "" {
+		port = "5432"
+	}
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, password, host, port, dbName)
+}

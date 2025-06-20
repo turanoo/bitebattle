@@ -1,5 +1,5 @@
 #!/bin/bash
-# Generate .env file for docker-compose and migrations.sh from config/local.yaml
+# Generate .env file for docker-compose for local development
 
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 YAML_PATH="$PROJECT_ROOT/config/local.yaml"

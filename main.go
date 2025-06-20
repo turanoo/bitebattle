@@ -12,6 +12,11 @@ import (
 	"github.com/turanoo/bitebattle/pkg/config"
 	"github.com/turanoo/bitebattle/pkg/db"
 	"github.com/turanoo/bitebattle/pkg/logger"
+	"github.com/turanoo/bitebattle/pkg/utils"
+)
+
+var (
+	MIGRATIONS_PATH = "./migrations"
 )
 
 func main() {
@@ -30,6 +35,11 @@ func main() {
 		os.Exit(1)
 	}
 	database := db.GetDB()
+
+	if err := utils.RunMigrations(db.GetPostgresURL(cfg), MIGRATIONS_PATH); err != nil {
+		logger.Errorf("Failed to run migrations: %v", err)
+		os.Exit(1)
+	}
 
 	router := gin.New()
 	router.Use(RequestLogger())

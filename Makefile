@@ -8,13 +8,12 @@ COMPOSE = docker-compose
 help:
 	@echo "Available commands:"
 	@echo "  make up              Start Postgres container"
-	@echo "  make migrate         Run DB migrations"
 	@echo "  make run             Run backend server"
-	@echo "  make dev             Full local dev (up + migrate + run)"
+	@echo "  make dev             Full local dev (up + run)"
 	@echo "  make stop            Stop containers"
 	@echo "  make destroy         Stop and destroy containers (data will be deleted from db)"
 	@echo "  make build           Build Go binary"
-	@echo "  make fresh           Stop, destroy, start, migrate, and run"
+	@echo "  make fresh           Stop, destroy, up, and run"
 	@echo "  make lint            Run golangci-lint to check code quality"
 	@echo "  make test            Run tests"
 	@echo "  make docker-build    Build Docker image for the server"
@@ -26,13 +25,10 @@ up:
 	@echo "Waiting for Postgres to be ready..."
 	@sleep 5
 
-migrate:
-	bash scripts/migrations.sh
-
 run:
 	go run main.go
 
-dev: up migrate run
+dev: up run
 
 stop:
 	$(COMPOSE) down
@@ -49,7 +45,7 @@ lint:
 test:
 	cd tests && go test ./... && cd ..
 
-fresh: destroy up migrate run
+fresh: destroy up run
 
 docker-build:
 	docker build -t gcr.io/bitebattle/server .
