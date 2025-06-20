@@ -56,10 +56,14 @@ func findProjectRoot() (string, error) {
 }
 
 func parentDir(path string) string {
-	if path == "/" {
+	if path == "/" || path == "" {
 		return "/"
 	}
-	return path[:strings.LastIndex(path, "/")]
+	idx := strings.LastIndex(path, "/")
+	if idx <= 0 {
+		return "/"
+	}
+	return path[:idx]
 }
 
 func LoadConfig(ctx context.Context, configDir string) (*Config, error) {
