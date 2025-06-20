@@ -42,45 +42,19 @@ type Config struct {
 	} `yaml:"vertex"`
 }
 
-func findProjectRoot() (string, error) {
-	wd, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	for dir := wd; dir != "/" && dir != "."; dir = parentDir(dir) {
-		if _, err := os.Stat(fmt.Sprintf("%s/go.mod", dir)); err == nil {
-			return dir, nil
-		}
-	}
-	return "", fmt.Errorf("project root (go.mod) not found from %s", wd)
-}
-
-func parentDir(path string) string {
-	if path == "/" || path == "" {
-		return "/"
-	}
-	idx := strings.LastIndex(path, "/")
-	if idx <= 0 {
-		return "/"
-	}
-	return path[:idx]
-}
-
 func LoadConfig(ctx context.Context, configDir string) (*Config, error) {
 	appEnv := os.Getenv("APP_ENV")
 	if appEnv == "" {
 		appEnv = "local"
 	}
 
-	projectRoot, err := findProjectRoot()
+	path := fmt.Sprintf("./config/%s.yaml", appEnv)
+
+	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find project root: %w", err)
+		return nil, fmt.Errorf("failed to open config file: %w", err)
 	}
-	file := fmt.Sprintf("%s/config/%s.yaml", projectRoot, appEnv)
-	data, err := os.ReadFile(file)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open %s: %w", file, err)
-	}
+
 	var cfg Config
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, err

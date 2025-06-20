@@ -21,6 +21,7 @@ RUN apk --no-cache add ca-certificates
 
 COPY --from=builder /app/server ./server
 COPY migrations ./migrations
+COPY config ./config
 
 EXPOSE 8080
 
