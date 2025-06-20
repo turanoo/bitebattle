@@ -63,16 +63,16 @@ func parentDir(path string) string {
 }
 
 func LoadConfig(ctx context.Context, configDir string) (*Config, error) {
-	osEnv := os.Getenv("OSENV")
-	if osEnv == "" {
-		osEnv = "local"
+	appEnv := os.Getenv("APP_ENV")
+	if appEnv == "" {
+		appEnv = "local"
 	}
 
 	projectRoot, err := findProjectRoot()
 	if err != nil {
 		return nil, fmt.Errorf("failed to find project root: %w", err)
 	}
-	file := fmt.Sprintf("%s/config/%s.yaml", projectRoot, osEnv)
+	file := fmt.Sprintf("%s/config/%s.yaml", projectRoot, appEnv)
 	data, err := os.ReadFile(file)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open %s: %w", file, err)
@@ -81,7 +81,7 @@ func LoadConfig(ctx context.Context, configDir string) (*Config, error) {
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, err
 	}
-	if osEnv == "prod" {
+	if appEnv == "prod" {
 		if err := resolveGCPSecrets(ctx, &cfg); err != nil {
 			return nil, err
 		}

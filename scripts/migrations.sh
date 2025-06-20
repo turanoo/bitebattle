@@ -7,7 +7,7 @@ if [ -f .env ]; then
 fi
 
 # Determine environment
-ENV=${OSENV:-local}
+ENV=${APP_ENV:-local}
 
 if [ "$ENV" = "prod" ]; then
   echo "[MIGRATE DEBUG] Environment is prod. Fetching secrets from GCP Secret Manager..."
