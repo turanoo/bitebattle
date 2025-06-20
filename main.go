@@ -1,13 +1,15 @@
 package main
 
 import (
+	"context"
 	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 
 	"github.com/turanoo/bitebattle/api"
+	"github.com/turanoo/bitebattle/internal/auth"
+	"github.com/turanoo/bitebattle/pkg/config"
 	"github.com/turanoo/bitebattle/pkg/db"
 	"github.com/turanoo/bitebattle/pkg/logger"
 )
@@ -15,22 +17,25 @@ import (
 func main() {
 	logger.Init()
 
-	if err := godotenv.Load(); err != nil {
-		logger.Warn("No .env file found, using system env variables")
+	ctx := context.Background()
+	cfg, err := config.LoadConfig(ctx, "config")
+	if err != nil {
+		logger.Errorf("Failed to load config: %v", err)
+		os.Exit(1)
 	}
+	auth.InitJWTKey(cfg)
 
-	if err := db.Init(); err != nil {
+	if err := db.Init(cfg); err != nil {
 		logger.Errorf("Failed to connect to DB: %v", err)
 		os.Exit(1)
 	}
-
 	database := db.GetDB()
 
 	router := gin.New()
 	router.Use(RequestLogger())
 	router.Use(ErrorRecovery())
 
-	api.SetupRoutes(router, database)
+	api.SetupRoutes(router, database, cfg)
 
 	port := os.Getenv("PORT")
 	if port == "" {

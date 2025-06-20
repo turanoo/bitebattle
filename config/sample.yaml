@@ -1,0 +1,26 @@
+application:
+  name: BiteBattle
+  version: 1.0.0
+  environment: dev
+  jwt_secret: superSecretKeyForDevelopment
+
+db:
+  host: localhost
+  port: 5433
+  user: someUserName # Replace with your actual database username
+  pass: somePassword # Replace with your actual database password
+  name: bitebattle_local # Replace with your actual database name
+
+gcs:
+  profile_bucket: your_bucket_name # Replace with your actual bucket name from Google Cloud Storage
+  object_url: https://storage.googleapis.com/
+
+google_places:
+  api_key: your_api_key_here # Replace with your actual Google Places API key
+  api_endpoint: https://maps.googleapis.com/maps/api/place/textsearch/json
+
+vertex:
+  project_id: test-project-id # Replace with your actual Google Cloud project ID
+  location: us-central1 # Replace with your actual Google Cloud region
+  model: gemini-2.0-flash-001 # Replace with your actual model name
+  auth_token: your_auth_token_here # Replace with your actual authentication token (needs to replaced frequently with a new one)

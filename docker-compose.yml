@@ -1,11 +1,8 @@
-version: '3.8'
 services:
   db:
     image: postgres:15
     container_name: bitebattle-db
     restart: always
-    env_file:
-      - .env
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}

@@ -2,13 +2,17 @@ package auth
 
 import (
 	"errors"
-	"os"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
+	"github.com/turanoo/bitebattle/pkg/config"
 )
 
-var jwtKey = []byte(os.Getenv("JWT_SECRET"))
+var jwtKey []byte
+
+func InitJWTKey(cfg *config.Config) {
+	jwtKey = []byte(cfg.Application.JWTSecret)
+}
 
 type Claims struct {
 	UserID string `json:"user_id"`

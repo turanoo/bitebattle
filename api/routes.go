@@ -11,9 +11,10 @@ import (
 	"github.com/turanoo/bitebattle/internal/poll"
 	"github.com/turanoo/bitebattle/internal/restaurant"
 	"github.com/turanoo/bitebattle/internal/user"
+	"github.com/turanoo/bitebattle/pkg/config"
 )
 
-func SetupRoutes(router *gin.Engine, db *sql.DB) {
+func SetupRoutes(router *gin.Engine, db *sql.DB, cfg *config.Config) {
 	api := router.Group("/v1")
 
 	userService := user.NewService(db)
@@ -35,14 +36,14 @@ func SetupRoutes(router *gin.Engine, db *sql.DB) {
 	protected.GET("/users", userHandler.GetUserByQuery)
 	protected.POST("/users", userHandler.CreateUser)
 
-	accountService := account.NewService(db)
+	accountService := account.NewService(db, cfg)
 	accountHandler := account.NewHandler(accountService)
 	protected.GET("/account", accountHandler.GetProfile)
 	protected.PUT("/account", accountHandler.UpdateProfile)
 	protected.POST("/account/profile-pic/upload-url", accountHandler.GetProfilePicUploadURL)
 	protected.GET("/account/profile-pic/access-url", accountHandler.GetProfilePicAccessURL)
 
-	pollService := poll.NewService(db)
+	pollService := poll.NewService(db, cfg)
 	pollHandler := poll.NewHandler(pollService)
 	protected.POST("/polls", pollHandler.CreatePoll)
 	protected.GET("/polls", pollHandler.GetPolls)
@@ -55,18 +56,18 @@ func SetupRoutes(router *gin.Engine, db *sql.DB) {
 	protected.POST("/polls/:pollId/unvote", pollHandler.UncastVote)
 	protected.GET("/polls/:pollId/results", pollHandler.GetResults)
 
-	restaurantService := restaurant.NewService()
+	restaurantService := restaurant.NewService(cfg)
 	restaurantHandler := restaurant.NewHandler(restaurantService)
 	protected.GET("/restaurants/search", restaurantHandler.SearchRestaurants)
 
-	h2hService := head2head.NewService(db)
+	h2hService := head2head.NewService(db, cfg)
 	h2hHandler := head2head.NewHandler(h2hService)
 	protected.POST("/h2h/match", h2hHandler.CreateMatch)
 	protected.POST("/h2h/match/:id/accept", h2hHandler.AcceptMatch)
 	protected.POST("/h2h/match/:id/swipe", h2hHandler.SubmitSwipe)
 	protected.GET("/h2h/match/:id/results", h2hHandler.GetMatchResults)
 
-	agenticVertex := agentic.NewVertexAIClient()
+	agenticVertex := agentic.NewVertexAIClient(cfg)
 	agenticService := agentic.NewService(agenticVertex, *pollService, *restaurantService)
 	agenticHandler := agentic.NewHandler(agenticService)
 	protected.POST("/agentic/command", agenticHandler.Command)

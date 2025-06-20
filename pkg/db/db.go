@@ -7,17 +7,18 @@ import (
 	"os"
 
 	_ "github.com/lib/pq"
+	"github.com/turanoo/bitebattle/pkg/config"
 )
 
 var db *sql.DB
 
-func Init() error {
-	instanceConnName := os.Getenv("INSTANCE_CONNECTION_NAME")
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASS")
-	dbName := os.Getenv("DB_NAME")
-	host := os.Getenv("DB_HOST")
-	port := os.Getenv("DB_PORT")
+func Init(cfg *config.Config) error {
+	instanceConnName := os.Getenv("INSTANCE_CONNECTION_NAME") // Still from env for Cloud SQL
+	user := cfg.DB.User
+	password := cfg.DB.Pass
+	dbName := cfg.DB.Name
+	host := cfg.DB.Host
+	port := cfg.DB.Port
 
 	log.Printf("[DB DEBUG] DB_USER=%s, DB_PASS=%s, DB_NAME=%s, INSTANCE_CONNECTION_NAME=%s, DB_HOST=%s, DB_PORT=%s", user, password, dbName, instanceConnName, host, port)
 

@@ -5,13 +5,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
 	"cloud.google.com/go/storage"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	"github.com/turanoo/bitebattle/pkg/config"
 	"github.com/turanoo/bitebattle/pkg/db"
 )
 
@@ -26,11 +26,12 @@ type Service struct {
 	ObjectUrl     string
 }
 
-func NewService(db *sql.DB) *Service {
-	bucket := os.Getenv("GCS_PROFILE_BUCKET")
-	objectUrl := os.Getenv("GCS_OBJECT_URL")
-
-	return &Service{DB: db, ProfileBucket: bucket, ObjectUrl: objectUrl}
+func NewService(db *sql.DB, cfg *config.Config) *Service {
+	return &Service{
+		DB:            db,
+		ProfileBucket: cfg.GCS.ProfileBucket,
+		ObjectUrl:     cfg.GCS.ObjectURL,
+	}
 }
 
 type UserProfile struct {

@@ -6,15 +6,17 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	"github.com/turanoo/bitebattle/pkg/config"
 	"github.com/turanoo/bitebattle/pkg/db"
 )
 
 type Service struct {
 	DB      *sql.DB
 	Matcher *Matcher
+	// Add config if needed in future
 }
 
-func NewService(db *sql.DB) *Service {
+func NewService(db *sql.DB, cfg *config.Config) *Service {
 	return &Service{DB: db, Matcher: NewMatcher(db)}
 }
 

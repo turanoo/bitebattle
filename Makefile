@@ -21,15 +21,16 @@ help:
 	@echo "  make docker-push     Push Docker image to Google Container Registry"
 
 up:
+	bash scripts/env.sh
 	$(COMPOSE) up -d db
 	@echo "Waiting for Postgres to be ready..."
 	@sleep 5
 
 migrate:
-	bash scripts/run_migrations.sh
+	bash scripts/migrations.sh
 
 run:
-	go run cmd/server/main.go
+	go run main.go
 
 dev: up migrate run
 
@@ -37,10 +38,10 @@ stop:
 	$(COMPOSE) down
 
 destroy:
-	$(COMPOSE) down -v
+	$(COMPOSE) down -v && rm -f .env
 
 build:
-	go build -o bin/server cmd/server/main.go
+	go build -o bin/server main.go
 
 lint:
 	golangci-lint run ./...

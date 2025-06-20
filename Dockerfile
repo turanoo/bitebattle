@@ -11,7 +11,7 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o server ./cmd/server/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o server ./main.go
 
 FROM alpine:latest
 WORKDIR /app
@@ -26,10 +26,10 @@ RUN wget -O migrate.tar.gz https://github.com/golang-migrate/migrate/releases/do
 
 COPY --from=builder /app/server ./server
 COPY migrations ./migrations
-COPY scripts/run_migrations.sh ./run_migrations.sh
+COPY scripts/migrations.sh ./migrations.sh
 
-RUN chmod +x ./run_migrations.sh
+RUN chmod +x ./migrations.sh
 
 EXPOSE 8080
 
-CMD sh -c './run_migrations.sh && ./server'
+CMD sh -c './migrations.sh && ./server'

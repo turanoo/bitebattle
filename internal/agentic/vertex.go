@@ -8,8 +8,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strings"
+
+	"github.com/turanoo/bitebattle/pkg/config"
 )
 
 type VertexAIClient struct {
@@ -17,15 +18,12 @@ type VertexAIClient struct {
 	AuthToken string
 }
 
-func NewVertexAIClient() *VertexAIClient {
-	projectID := os.Getenv("VERTEX_PROJECT_ID")
-	location := os.Getenv("VERTEX_LOCATION")
-	model := os.Getenv("VERTEX_MODEL")
-	token := os.Getenv("VERTEX_AUTH_TOKEN")
-	url := fmt.Sprintf("https://%s-aiplatform.googleapis.com/v1beta1/projects/%s/locations/%s/publishers/google/models/%s:generateContent", location, projectID, location, model)
+func NewVertexAIClient(cfg *config.Config) *VertexAIClient {
+	url := fmt.Sprintf("https://%s-aiplatform.googleapis.com/v1beta1/projects/%s/locations/%s/publishers/google/models/%s:generateContent",
+		cfg.Vertex.Location, cfg.Vertex.ProjectID, cfg.Vertex.Location, cfg.Vertex.Model)
 	return &VertexAIClient{
 		Url:       url,
-		AuthToken: token,
+		AuthToken: cfg.Vertex.AuthToken,
 	}
 }
 

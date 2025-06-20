@@ -3,15 +3,17 @@ module github.com/turanoo/bitebattle
 go 1.24
 
 require (
+	cloud.google.com/go/secretmanager v1.14.7
 	cloud.google.com/go/storage v1.55.0
 	github.com/gin-gonic/gin v1.10.1
 	github.com/go-playground/validator/v10 v10.20.0
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/uuid v1.6.0
-	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	github.com/sirupsen/logrus v1.9.3
 	golang.org/x/crypto v0.39.0
+	google.golang.org/genproto v0.0.0-20250505200425-f936aa4a68b2
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -74,10 +76,8 @@ require (
 	golang.org/x/text v0.26.0 // indirect
 	golang.org/x/time v0.11.0 // indirect
 	google.golang.org/api v0.235.0 // indirect
-	google.golang.org/genproto v0.0.0-20250505200425-f936aa4a68b2 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250512202823-5a2f75b736a9 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250512202823-5a2f75b736a9 // indirect
 	google.golang.org/grpc v1.72.1 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

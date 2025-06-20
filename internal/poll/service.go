@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/turanoo/bitebattle/pkg/config"
 	"github.com/turanoo/bitebattle/pkg/db"
 	"github.com/turanoo/bitebattle/pkg/utils"
 )
@@ -19,9 +20,10 @@ var ErrOptionNotInPoll = errors.New("option does not exist for this poll")
 
 type Service struct {
 	DB *sql.DB
+	// Add config if needed in future
 }
 
-func NewService(db *sql.DB) *Service {
+func NewService(db *sql.DB, cfg *config.Config) *Service {
 	return &Service{DB: db}
 }
 

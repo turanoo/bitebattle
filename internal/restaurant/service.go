@@ -1,16 +1,18 @@
 package restaurant
 
-import "os"
+import (
+	"github.com/turanoo/bitebattle/pkg/config"
+)
 
 type Service struct {
 	Endpoint string
 	APIKey   string
 }
 
-func NewService() *Service {
+func NewService(cfg *config.Config) *Service {
 	return &Service{
-		Endpoint: os.Getenv("GOOGLE_PLACES_API_ENDPOINT"),
-		APIKey:   os.Getenv("GOOGLE_PLACES_API_KEY"),
+		Endpoint: cfg.GooglePlaces.APIEndpoint,
+		APIKey:   cfg.GooglePlaces.APIKey,
 	}
 }
 
