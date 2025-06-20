@@ -39,7 +39,7 @@ BiteBattle is a Go-based RESTful API server powering the BiteBattle application.
 
 ### Interactive API Docs
 
-You can preview the OpenAPI (Swagger) specification using this [link](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/turanoo/bitebattle/main/docs/api-spec.yaml).
+You can preview the OpenAPI (Swagger) specification using this [link](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/turanoo/bitebattle/master/docs/api-spec.yaml).
 
 ---
 
