@@ -77,14 +77,14 @@ GOOGLE_PLACES_API_KEY=your_google_places_api_key
 GCS_PROFILE_BUCKET=your_gcs_profile_pictures_storage_bucket
 ```
 
-### 3. Start PostgreSQL with Docker Compose
+### 3. Running locally
 
-Ensure your Docker daemon is running prior to executing the next steps!
+Ensure your Docker daemon is running prior to executing the next step!
 
 ```sh
 make dev
 ```
-Refer to the `Makefile` for full list of commands
+Refer to the `Makefile` for full list of commands.
 
 
 ## Contributing
