@@ -14,6 +14,8 @@ import (
 )
 
 var ErrInvalidInviteCode = errors.New("invalid invite code")
+var ErrAlreadyMember = errors.New("user is already a member or owner of this poll")
+var ErrOptionNotInPoll = errors.New("option does not exist for this poll")
 
 type Service struct {
 	DB *sql.DB
@@ -271,6 +273,18 @@ func (s *Service) JoinPoll(inviteCode string, userId uuid.UUID) (*Poll, error) {
 		return nil, err
 	}
 
+	// Check if user is already a member or owner
+	var exists bool
+	err = s.DB.QueryRow(`
+		SELECT EXISTS (SELECT 1 FROM polls_members WHERE poll_id = $1 AND user_id = $2)
+	`, poll.ID, userId).Scan(&exists)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		return nil, ErrAlreadyMember
+	}
+
 	_, err = s.DB.Exec(`
 		INSERT INTO polls_members (poll_id, user_id)
 		VALUES ($1, $2)
@@ -310,7 +324,17 @@ func (s *Service) AddOption(pollID uuid.UUID, restaurantID, name, imageURL, menu
 func (s *Service) CastVote(pollID, optionID, userID uuid.UUID) (*PollVote, error) {
 	id := uuid.New()
 
-	_, err := s.DB.Exec(`
+	// Check if option exists for this poll
+	var exists bool
+	err := s.DB.QueryRow(`SELECT EXISTS (SELECT 1 FROM poll_options WHERE id = $1 AND poll_id = $2)`, optionID, pollID).Scan(&exists)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, ErrOptionNotInPoll
+	}
+
+	_, err = s.DB.Exec(`
 		INSERT INTO poll_votes (id, poll_id, option_id, user_id)
 		VALUES ($1, $2, $3, $4)
 	`, id, pollID, optionID, userID)
@@ -328,6 +352,16 @@ func (s *Service) CastVote(pollID, optionID, userID uuid.UUID) (*PollVote, error
 }
 
 func (s *Service) RemoveVote(pollID, optionID, userID uuid.UUID) error {
+	// Check if option exists for this poll
+	var exists bool
+	err := s.DB.QueryRow(`SELECT EXISTS (SELECT 1 FROM poll_options WHERE id = $1 AND poll_id = $2)`, optionID, pollID).Scan(&exists)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return ErrOptionNotInPoll
+	}
+
 	result, err := s.DB.Exec(`
 		DELETE FROM poll_votes WHERE poll_id = $1 AND option_id = $2 AND user_id = $3
 	`, pollID, optionID, userID)

@@ -45,7 +45,7 @@ func SetupRoutes(router *gin.Engine, db *sql.DB) {
 	pollHandler := poll.NewHandler(pollService)
 	protected.POST("/polls", pollHandler.CreatePoll)
 	protected.GET("/polls", pollHandler.GetPolls)
-	protected.POST("/polls/:pollId/join", pollHandler.JoinPoll)
+	protected.POST("/polls/join", pollHandler.JoinPoll)
 	protected.GET("/polls/:pollId", pollHandler.GetPoll)
 	protected.DELETE("/polls/:pollId", pollHandler.DeletePoll)
 	protected.PUT("/polls/:pollId", pollHandler.UpdatePoll)

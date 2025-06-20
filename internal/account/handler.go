@@ -11,6 +11,7 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/gin-gonic/gin"
+	"github.com/turanoo/bitebattle/internal/auth"
 	"github.com/turanoo/bitebattle/pkg/logger"
 	"github.com/turanoo/bitebattle/pkg/utils"
 )
@@ -24,9 +25,9 @@ func NewHandler(service *Service) *Handler {
 }
 
 func (h *Handler) GetProfile(c *gin.Context) {
-	userID, err := utils.UserIDFromContext(c)
+	userID, err := auth.UserIDFromContext(c)
 	if err != nil {
-		logger.Warnf("Invalid user id in GetProfile: %v", err)
+		logger.Warnf("Invalid user id in GetProfile token: %v", err)
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
 	}
@@ -42,7 +43,12 @@ func (h *Handler) GetProfile(c *gin.Context) {
 }
 
 func (h *Handler) UpdateProfile(c *gin.Context) {
-	userID, _ := c.Get("userID")
+	userID, err := auth.UserIDFromContext(c)
+	if err != nil {
+		logger.Warnf("Invalid user id in UpdateProfile token: %v", err)
+		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
+		return
+	}
 
 	var req UpdateProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -51,7 +57,7 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
-	err := h.Service.UpdateProfile(ctx, userID.(string), req.Name, req.Email)
+	err = h.Service.UpdateProfile(ctx, userID, req.Name, req.Email)
 	if err != nil {
 		if errors.Is(err, ErrEmailExists) {
 			utils.ErrorResponse(c, http.StatusConflict, "User with this email already exists.")
@@ -66,7 +72,7 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 }
 
 func (h *Handler) GetProfilePicUploadURL(c *gin.Context) {
-	userID, err := utils.UserIDFromContext(c)
+	userID, err := auth.UserIDFromContext(c)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
@@ -89,7 +95,7 @@ func (h *Handler) GetProfilePicUploadURL(c *gin.Context) {
 }
 
 func (h *Handler) GetProfilePicAccessURL(c *gin.Context) {
-	userID, err := utils.UserIDFromContext(c)
+	userID, err := auth.UserIDFromContext(c)
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return

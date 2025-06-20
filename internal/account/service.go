@@ -119,7 +119,7 @@ func (s *Service) UpdateUserProfile(userID uuid.UUID, name, email, currentPasswo
 	return nil
 }
 
-func (s *Service) UpdateProfile(ctx context.Context, userID string, name, email string) error {
+func (s *Service) UpdateProfile(ctx context.Context, userID uuid.UUID, name, email string) error {
 	_, err := s.DB.ExecContext(ctx, `
 		UPDATE users SET name = $1, email = $2, updated_at = NOW()
 		WHERE id = $3

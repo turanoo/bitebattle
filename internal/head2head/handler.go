@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/turanoo/bitebattle/internal/auth"
 	"github.com/turanoo/bitebattle/pkg/logger"
 	"github.com/turanoo/bitebattle/pkg/utils"
 )
@@ -24,10 +25,9 @@ func (h *Handler) CreateMatch(c *gin.Context) {
 		return
 	}
 
-	userID, _ := c.Get("userID")
-	inviterUUID, err := uuid.Parse(userID.(string))
+	userID, err := auth.UserIDFromContext(c)
 	if err != nil {
-		logger.Warnf("Invalid user id in CreateMatch: %v", err)
+		logger.Warnf("Invalid user id in CreateMatch token: %v", err)
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
 	}
@@ -39,7 +39,7 @@ func (h *Handler) CreateMatch(c *gin.Context) {
 		return
 	}
 
-	match, err := h.Service.CreateMatch(inviterUUID, inviteeID, req.Categories)
+	match, err := h.Service.CreateMatch(userID, inviteeID, req.Categories)
 	if err != nil {
 		logger.Errorf("Could not create match: %v", err)
 		utils.ErrorResponse(c, http.StatusInternalServerError, "could not create match")
@@ -57,7 +57,7 @@ func (h *Handler) AcceptMatch(c *gin.Context) {
 		return
 	}
 
-	userID, err := utils.UserIDFromContext(c)
+	userID, err := auth.UserIDFromContext(c)
 	if err != nil {
 		logger.Warnf("Invalid user id in AcceptMatch: %v", err)
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
@@ -86,7 +86,7 @@ func (h *Handler) SubmitSwipe(c *gin.Context) {
 		return
 	}
 
-	userID, err := utils.UserIDFromContext(c)
+	userID, err := auth.UserIDFromContext(c)
 	if err != nil {
 		logger.Warnf("Invalid user id in SubmitSwipe: %v", err)
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")

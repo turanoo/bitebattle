@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/turanoo/bitebattle/internal/auth"
 	"github.com/turanoo/bitebattle/pkg/logger"
 	"github.com/turanoo/bitebattle/pkg/utils"
 )
@@ -26,14 +27,14 @@ func (h *Handler) CreatePoll(c *gin.Context) {
 		return
 	}
 
-	userID, exists := c.Get("userID")
-	if !exists {
-		logger.Warn("Unauthorized access in CreatePoll")
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+	userID, err := auth.UserIDFromContext(c)
+	if err != nil {
+		logger.Warnf("Invalid user id in CreatePoll token: %v", err)
+		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
 	}
 
-	poll, err := h.Service.CreatePoll(req.Name, userID.(uuid.UUID))
+	poll, err := h.Service.CreatePoll(req.Name, userID)
 	if err != nil {
 		logger.Errorf("Failed to create poll for user %s: %v", userID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create poll"})
@@ -45,7 +46,7 @@ func (h *Handler) CreatePoll(c *gin.Context) {
 }
 
 func (h *Handler) GetPolls(c *gin.Context) {
-	userID, err := utils.UserIDFromContext(c)
+	userID, err := auth.UserIDFromContext(c)
 	if err != nil {
 		logger.Warnf("Invalid user id in GetPolls: %v", err)
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
@@ -69,19 +70,24 @@ func (h *Handler) JoinPoll(c *gin.Context) {
 		return
 	}
 
-	userID, exists := c.Get("userID")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+	userID, err := auth.UserIDFromContext(c)
+	if err != nil {
+		logger.Warnf("Invalid user id in JoinPoll token: %v", err)
+		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
 	}
 
-	poll, err := h.Service.JoinPoll(req.InviteCode, uuid.MustParse(userID.(string)))
+	poll, err := h.Service.JoinPoll(req.InviteCode, userID)
 	if err != nil {
 		if errors.Is(err, ErrInvalidInviteCode) {
 			utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
-		} else {
-			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to join poll.")
+			return
 		}
+		if errors.Is(err, ErrAlreadyMember) {
+			utils.ErrorResponse(c, http.StatusConflict, "User is already a member or owner of this poll.")
+			return
+		}
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to join poll.")
 		return
 	}
 
@@ -95,13 +101,14 @@ func (h *Handler) GetPoll(c *gin.Context) {
 		return
 	}
 
-	userID, exists := c.Get("userID")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+	userID, err := auth.UserIDFromContext(c)
+	if err != nil {
+		logger.Warnf("Invalid user id in GetPoll token: %v", err)
+		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
 	}
 
-	poll, err := h.Service.GetPoll(pollID, uuid.MustParse(userID.(string)))
+	poll, err := h.Service.GetPoll(pollID, userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			utils.ErrorResponse(c, http.StatusNotFound, "Poll not found.")
@@ -197,9 +204,10 @@ func (h *Handler) CastVote(c *gin.Context) {
 		return
 	}
 
-	userID, exists := c.Get("userID")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+	userID, err := auth.UserIDFromContext(c)
+	if err != nil {
+		logger.Warnf("Invalid user id in CastVote token: %v", err)
+		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
 	}
 
@@ -209,8 +217,12 @@ func (h *Handler) CastVote(c *gin.Context) {
 		return
 	}
 
-	vote, err := h.Service.CastVote(pollID, optionID, uuid.MustParse(userID.(string)))
+	vote, err := h.Service.CastVote(pollID, optionID, userID)
 	if err != nil {
+		if errors.Is(err, ErrOptionNotInPoll) {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Option does not exist for this poll.")
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to cast vote"})
 		return
 	}
@@ -232,9 +244,10 @@ func (h *Handler) UncastVote(c *gin.Context) {
 		return
 	}
 
-	userID, exists := c.Get("userID")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+	userID, err := auth.UserIDFromContext(c)
+	if err != nil {
+		logger.Warnf("Invalid user id in UncastVote token: %v", err)
+		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
 	}
 
@@ -244,7 +257,11 @@ func (h *Handler) UncastVote(c *gin.Context) {
 		return
 	}
 
-	if err := h.Service.RemoveVote(pollID, optionID, uuid.MustParse(userID.(string))); err != nil {
+	if err := h.Service.RemoveVote(pollID, optionID, userID); err != nil {
+		if errors.Is(err, ErrOptionNotInPoll) {
+			utils.ErrorResponse(c, http.StatusBadRequest, "Option does not exist for this poll.")
+			return
+		}
 		if errors.Is(err, sql.ErrNoRows) {
 			utils.ErrorResponse(c, http.StatusNotFound, "Vote not found.")
 		} else {

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/turanoo/bitebattle/pkg/utils"
 )
 
@@ -32,16 +33,19 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		c.Set(userIDContextKey, claims.UserID)
+		userUUID, err := uuid.Parse(claims.UserID)
+		if err != nil {
+			utils.ErrorResponse(c, http.StatusUnauthorized, "invalid user id in token")
+			c.Abort()
+			return
+		}
+		c.Set(userIDContextKey, userUUID)
 
 		c.Next()
 	}
 }
 
-func GetUserIDFromContext(c *gin.Context) (string, bool) {
-	userID, exists := c.Get(userIDContextKey)
-	if !exists {
-		return "", false
-	}
-	return userID.(string), true
+func UserIDFromContext(c *gin.Context) (uuid.UUID, error) {
+	userID := c.MustGet(userIDContextKey).(uuid.UUID)
+	return userID, nil
 }

@@ -332,7 +332,7 @@ paths:
       security:
         - bearerAuth: []
 
-  /v1/polls/{pollId}/join:
+  /v1/polls/join:
     post:
       tags: [Poll]
       summary: Join a poll by invite code
