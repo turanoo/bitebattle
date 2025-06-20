@@ -24,6 +24,7 @@ BiteBattle is a Go-based RESTful API server powering the BiteBattle application.
 
 #### Key Features
 
+- **Agentic AI Workflows:** Integrate AI-driven agents to automate poll creation, suggest restaurants, and facilitate group decision-making.
 - **JWT Authentication:** Secure endpoints with token-based auth.
 - **User Profiles:** Manage user info, phone, and profile pictures (stored in GCS).
 - **Secure Image Uploads:** Direct, signed URL uploads to Google Cloud Storage.
@@ -59,23 +60,7 @@ cd bitebattle
 
 ### 2. Configure Environment Variables
 
-Create an env file and add the following information:
-
-```sh
-touch .env
-```
-
-**Example `.env`:**
-```
-DB_USER=your_db_user
-DB_PASS=your_db_password
-DB_NAME=your_db_name
-DB_HOST=localhost
-DB_PORT=5432
-JWT_SECRET=your_jwt_secret
-GOOGLE_PLACES_API_KEY=your_google_places_api_key
-GCS_PROFILE_BUCKET=your_gcs_profile_pictures_storage_bucket
-```
+Modify the provided `.env_sample` with your values and rename it to `.env` for local development
 
 ### 3. Running locally
 

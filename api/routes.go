@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/turanoo/bitebattle/internal/account"
+	"github.com/turanoo/bitebattle/internal/agentic"
 	"github.com/turanoo/bitebattle/internal/auth"
 	"github.com/turanoo/bitebattle/internal/head2head"
 	"github.com/turanoo/bitebattle/internal/poll"
@@ -64,4 +65,9 @@ func SetupRoutes(router *gin.Engine, db *sql.DB) {
 	protected.POST("/h2h/match/:id/accept", h2hHandler.AcceptMatch)
 	protected.POST("/h2h/match/:id/swipe", h2hHandler.SubmitSwipe)
 	protected.GET("/h2h/match/:id/results", h2hHandler.GetMatchResults)
+
+	agenticVertex := agentic.NewVertexAIClient()
+	agenticService := agentic.NewService(agenticVertex, *pollService, *restaurantService)
+	agenticHandler := agentic.NewHandler(agenticService)
+	protected.POST("/agentic/command", agenticHandler.AgenticCommandHandler)
 }

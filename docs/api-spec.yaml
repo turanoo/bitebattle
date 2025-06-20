@@ -24,6 +24,8 @@ tags:
     description: Restaurant search
   - name: Head2Head
     description: Head2Head match functionality
+  - name: Agentic
+    description: Agentic flows for combining natural language commands with poll creation
 
 paths:
   /v1/auth/register:
@@ -596,6 +598,51 @@ paths:
               schema:
                 type: array
                 items: { $ref: '#/components/schemas/Swipe' }
+
+  /v1/agentic/command:
+    post:
+      tags: [Agentic]
+      summary: Agentic natural language poll creation
+      description: |
+        Accepts a natural language command (e.g., "Create a poll for sushi restaurants at 37.7749,-122.4194 within 5000 meters").
+        The agent will parse the command, extract food, location, and radius, create a poll, search for restaurants, and add the top 5-7 as options.
+        
+        **Authentication:** Requires Bearer token.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                command:
+                  type: string
+                  example: "Create a poll for pizza at 40.7128,-74.0060 within 8000 meters"
+      responses:
+        '200':
+          description: Poll created and options added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  poll_id:
+                    type: string
+                    format: uuid
+                  title:
+                    type: string
+                  options:
+                    type: array
+                    items:
+                      type: string
+        '400':
+          description: Invalid request or parsing error
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal error
 
 components:
   schemas:
