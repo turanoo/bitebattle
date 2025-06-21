@@ -67,14 +67,27 @@ func GetDB() *sql.DB {
 func GetPostgresURL(cfg *config.Config) string {
 	user := cfg.DB.User
 	password := cfg.DB.Pass
+	dbName := cfg.DB.Name
+	instanceConnName := cfg.DB.InstanceConn
 	host := cfg.DB.Host
 	port := cfg.DB.Port
-	dbName := cfg.DB.Name
+
+	if instanceConnName != "" {
+		// Cloud SQL Unix socket
+		return fmt.Sprintf(
+			"postgres://%s:%s@/%s?host=/cloudsql/%s&sslmode=disable",
+			user, password, dbName, instanceConnName,
+		)
+	}
+
 	if host == "" {
 		host = "localhost"
 	}
 	if port == "" {
 		port = "5432"
 	}
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, password, host, port, dbName)
+	return fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		user, password, host, port, dbName,
+	)
 }
