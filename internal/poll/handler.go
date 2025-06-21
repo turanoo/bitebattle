@@ -21,6 +21,7 @@ func NewHandler(service *Service) *Handler {
 }
 
 func (h *Handler) CreatePoll(c *gin.Context) {
+	log := logger.FromContext(c)
 	var req CreatePollRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, utils.FormatValidationError(err))
@@ -29,33 +30,34 @@ func (h *Handler) CreatePoll(c *gin.Context) {
 
 	userID, err := auth.UserIDFromContext(c)
 	if err != nil {
-		logger.Warnf("Invalid user id in CreatePoll token: %v", err)
+		log.WithError(err).Warn("Invalid user id in CreatePoll token")
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
 	}
 
 	poll, err := h.Service.CreatePoll(req.Name, userID)
 	if err != nil {
-		logger.Errorf("Failed to create poll for user %s: %v", userID, err)
+		log.WithError(err).Errorf("Failed to create poll for user %s", userID)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create poll"})
 		return
 	}
 
-	logger.Infof("Poll created: %s by user %s", poll.ID, userID)
+	log.Infof("Poll created: %s by user %s", poll.ID, userID)
 	c.JSON(http.StatusCreated, poll)
 }
 
 func (h *Handler) GetPolls(c *gin.Context) {
+	log := logger.FromContext(c)
 	userID, err := auth.UserIDFromContext(c)
 	if err != nil {
-		logger.Warnf("Invalid user id in GetPolls: %v", err)
+		log.WithError(err).Warn("Invalid user id in GetPolls")
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
 	}
 
 	polls, err := h.Service.GetPolls(userID)
 	if err != nil {
-		logger.Errorf("Failed to fetch polls for user %s: %v", userID, err)
+		log.WithError(err).Errorf("Failed to fetch polls for user %s", userID)
 		utils.ErrorResponse(c, http.StatusInternalServerError, "failed to fetch polls")
 		return
 	}
@@ -64,6 +66,7 @@ func (h *Handler) GetPolls(c *gin.Context) {
 }
 
 func (h *Handler) JoinPoll(c *gin.Context) {
+	log := logger.FromContext(c)
 	var req JoinPollRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, utils.FormatValidationError(err))
@@ -72,7 +75,7 @@ func (h *Handler) JoinPoll(c *gin.Context) {
 
 	userID, err := auth.UserIDFromContext(c)
 	if err != nil {
-		logger.Warnf("Invalid user id in JoinPoll token: %v", err)
+		log.WithError(err).Warn("Invalid user id in JoinPoll token")
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
 	}
@@ -95,6 +98,7 @@ func (h *Handler) JoinPoll(c *gin.Context) {
 }
 
 func (h *Handler) GetPoll(c *gin.Context) {
+	log := logger.FromContext(c)
 	pollID, err := uuid.Parse(c.Param("pollId"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid poll ID"})
@@ -103,7 +107,7 @@ func (h *Handler) GetPoll(c *gin.Context) {
 
 	userID, err := auth.UserIDFromContext(c)
 	if err != nil {
-		logger.Warnf("Invalid user id in GetPoll token: %v", err)
+		log.WithError(err).Warn("Invalid user id in GetPoll token")
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
 	}
@@ -122,6 +126,7 @@ func (h *Handler) GetPoll(c *gin.Context) {
 }
 
 func (h *Handler) DeletePoll(c *gin.Context) {
+	log := logger.FromContext(c)
 	pollID, err := uuid.Parse(c.Param("pollId"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid poll ID"})
@@ -130,8 +135,10 @@ func (h *Handler) DeletePoll(c *gin.Context) {
 
 	if err := h.Service.DeletePoll(pollID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			log.WithError(err).Warnf("Poll not found: %s", pollID)
 			utils.ErrorResponse(c, http.StatusNotFound, "Poll not found.")
 		} else {
+			log.WithError(err).Errorf("Failed to delete poll: %s", pollID)
 			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to delete poll.")
 		}
 		return
@@ -141,8 +148,10 @@ func (h *Handler) DeletePoll(c *gin.Context) {
 }
 
 func (h *Handler) UpdatePoll(c *gin.Context) {
+	log := logger.FromContext(c)
 	var req UpdatePollRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.WithError(err).Warn("Invalid update poll request")
 		utils.ErrorResponse(c, http.StatusBadRequest, utils.FormatValidationError(err))
 		return
 	}
@@ -150,12 +159,14 @@ func (h *Handler) UpdatePoll(c *gin.Context) {
 	pollIDStr := c.Param("pollId")
 	pollID, err := uuid.Parse(pollIDStr)
 	if err != nil {
+		log.WithError(err).Warn("Invalid poll ID in UpdatePoll")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid poll ID"})
 		return
 	}
 
 	poll, err := h.Service.UpdatePoll(pollID, req.Name)
 	if err != nil {
+		log.WithError(err).Errorf("Failed to update poll %s", pollID)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update poll"})
 		return
 	}
@@ -164,6 +175,7 @@ func (h *Handler) UpdatePoll(c *gin.Context) {
 }
 
 func (h *Handler) AddOption(c *gin.Context) {
+	log := logger.FromContext(c)
 	var req AddOptionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, utils.FormatValidationError(err))
@@ -173,6 +185,7 @@ func (h *Handler) AddOption(c *gin.Context) {
 	pollIDStr := c.Param("pollId")
 	pollID, err := uuid.Parse(pollIDStr)
 	if err != nil {
+		log.WithError(err).Warn("Invalid poll ID in AddOption")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid poll ID"})
 		return
 	}
@@ -181,6 +194,7 @@ func (h *Handler) AddOption(c *gin.Context) {
 	for _, opt := range req {
 		option, err := h.Service.AddOption(pollID, opt.RestaurantID, opt.Name, opt.ImageURL, opt.MenuURL)
 		if err != nil {
+			log.WithError(err).Errorf("Failed to add option %s to poll %s", opt.Name, pollID)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to add option"})
 			return
 		}
@@ -191,6 +205,7 @@ func (h *Handler) AddOption(c *gin.Context) {
 }
 
 func (h *Handler) CastVote(c *gin.Context) {
+	log := logger.FromContext(c)
 	var req VoteRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, utils.FormatValidationError(err))
@@ -206,7 +221,7 @@ func (h *Handler) CastVote(c *gin.Context) {
 
 	userID, err := auth.UserIDFromContext(c)
 	if err != nil {
-		logger.Warnf("Invalid user id in CastVote token: %v", err)
+		log.WithError(err).Warn("Invalid user id in CastVote token")
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
 	}
@@ -231,6 +246,7 @@ func (h *Handler) CastVote(c *gin.Context) {
 }
 
 func (h *Handler) UncastVote(c *gin.Context) {
+	log := logger.FromContext(c)
 	var req VoteRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, utils.FormatValidationError(err))
@@ -246,7 +262,7 @@ func (h *Handler) UncastVote(c *gin.Context) {
 
 	userID, err := auth.UserIDFromContext(c)
 	if err != nil {
-		logger.Warnf("Invalid user id in UncastVote token: %v", err)
+		log.WithError(err).Warn("Invalid user id in UncastVote token")
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
 	}
@@ -274,14 +290,17 @@ func (h *Handler) UncastVote(c *gin.Context) {
 }
 
 func (h *Handler) GetResults(c *gin.Context) {
+	log := logger.FromContext(c)
 	pollID, err := uuid.Parse(c.Param("pollId"))
 	if err != nil {
+		log.WithError(err).Warn("Invalid poll ID in GetResults")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid poll ID"})
 		return
 	}
 
 	results, err := h.Service.GetResults(pollID)
 	if err != nil {
+		log.WithError(err).Errorf("Failed to get results for poll %s", pollID)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get results"})
 		return
 	}

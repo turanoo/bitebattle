@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 
 	"github.com/turanoo/bitebattle/api"
 	"github.com/turanoo/bitebattle/internal/auth"
@@ -36,12 +37,30 @@ func main() {
 	}
 	database := db.GetDB()
 
-	if err := utils.RunMigrations(db.GetPostgresURL(cfg), MIGRATIONS_PATH); err != nil {
+	migrationLogger := logger.Log.WithFields(logrus.Fields{"requestId": "startup"})
+	if err := utils.RunMigrations(db.GetPostgresURL(cfg), MIGRATIONS_PATH, migrationLogger); err != nil {
 		logger.Errorf("Failed to run migrations: %v", err)
 		os.Exit(1)
 	}
 
+	gin.SetMode(cfg.Gin.Mode)
+	switch cfg.Gin.Log.Level {
+	case "debug":
+		logger.Log.SetLevel(logrus.DebugLevel)
+	case "info":
+		logger.Log.SetLevel(logrus.InfoLevel)
+	default:
+		logger.Log.SetLevel(logrus.InfoLevel)
+	}
+
+	if cfg.Gin.Log.Format == "json" {
+		logger.Log.SetFormatter(&logrus.JSONFormatter{})
+	} else {
+		logger.Log.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
+	}
+
 	router := gin.New()
+	router.Use(logger.Middleware())
 	router.Use(RequestLogger())
 	router.Use(ErrorRecovery())
 
@@ -71,7 +90,7 @@ func RequestLogger() gin.HandlerFunc {
 		duration := time.Since(start)
 		errMsg := c.Errors.ByType(gin.ErrorTypePrivate).String()
 		if errMsg != "" {
-			logger.Warnf("%s %s %d %s %s | ERR: %s", method, path, status, duration, clientIP, errMsg)
+			logger.Errorf("%s %s %d %s %s | ERR: %s", method, path, status, duration, clientIP, errMsg)
 		} else {
 			logger.Infof("%s %s %d %s %s", method, path, status, duration, clientIP)
 		}

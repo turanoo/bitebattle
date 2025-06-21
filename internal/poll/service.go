@@ -3,7 +3,6 @@ package poll
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -11,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/turanoo/bitebattle/pkg/config"
 	"github.com/turanoo/bitebattle/pkg/db"
+	"github.com/turanoo/bitebattle/pkg/logger"
 	"github.com/turanoo/bitebattle/pkg/utils"
 )
 
@@ -109,14 +109,14 @@ func (s *Service) GetPolls(userID uuid.UUID) ([]Poll, error) {
 			var memberID uuid.UUID
 			if err := memberRows.Scan(&memberID); err != nil {
 				if closeErr := memberRows.Close(); closeErr != nil {
-					fmt.Printf("failed to close memberRows: %v\n", closeErr)
+					logger.Log.WithError(closeErr).Error("failed to close memberRows")
 				}
 				return nil, err
 			}
 			members = append(members, memberID)
 		}
 		if err := memberRows.Close(); err != nil {
-			fmt.Printf("failed to close memberRows: %v\n", err)
+			logger.Log.WithError(err).Error("failed to close memberRows")
 		}
 
 		poll.Members = members
@@ -166,7 +166,7 @@ func (s *Service) GetPoll(pollID, userId uuid.UUID) (*Poll, error) {
 		members = append(members, memberID)
 	}
 	if err := memberRows.Close(); err != nil {
-		fmt.Printf("failed to close memberRows: %v\n", err)
+		logger.Log.WithError(err).Error("failed to close memberRows")
 	}
 	poll.Members = members
 
@@ -181,7 +181,7 @@ func (s *Service) DeletePoll(pollID uuid.UUID) error {
 	defer func() {
 		if p := recover(); p != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				fmt.Printf("failed to rollback transaction: %v\n", rollbackErr)
+				logger.Log.WithError(rollbackErr).Error("failed to rollback transaction")
 			}
 			panic(p)
 		}
@@ -194,7 +194,7 @@ func (s *Service) DeletePoll(pollID uuid.UUID) error {
 	`, pollID)
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			fmt.Printf("failed to rollback transaction: %v\n", rollbackErr)
+			logger.Log.WithError(rollbackErr).Error("failed to rollback transaction")
 		}
 		return err
 	}
@@ -204,7 +204,7 @@ func (s *Service) DeletePoll(pollID uuid.UUID) error {
 	`, pollID)
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			fmt.Printf("failed to rollback transaction: %v\n", rollbackErr)
+			logger.Log.WithError(rollbackErr).Error("failed to rollback transaction")
 		}
 		return err
 	}
@@ -214,7 +214,7 @@ func (s *Service) DeletePoll(pollID uuid.UUID) error {
 	`, pollID)
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			fmt.Printf("failed to rollback transaction: %v\n", rollbackErr)
+			logger.Log.WithError(rollbackErr).Error("failed to rollback transaction")
 		}
 		return err
 	}
@@ -224,7 +224,7 @@ func (s *Service) DeletePoll(pollID uuid.UUID) error {
 	`, pollID)
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			fmt.Printf("failed to rollback transaction: %v\n", rollbackErr)
+			logger.Log.WithError(rollbackErr).Error("failed to rollback transaction")
 		}
 		return err
 	}
@@ -397,7 +397,7 @@ func (s *Service) GetResults(pollID uuid.UUID) ([]PollResult, error) {
 	}
 	defer func() {
 		if err := rows.Close(); err != nil {
-			fmt.Printf("failed to close rows: %v\n", err)
+			logger.Log.WithError(err).Error("failed to close rows")
 		}
 	}()
 
@@ -424,14 +424,14 @@ func (s *Service) GetResults(pollID uuid.UUID) ([]PollResult, error) {
 			var voterID uuid.UUID
 			if err := voterRows.Scan(&voterID); err != nil {
 				if closeErr := voterRows.Close(); closeErr != nil {
-					fmt.Printf("failed to close voterRows: %v\n", closeErr)
+					logger.Log.WithError(closeErr).Error("failed to close voterRows")
 				}
 				return nil, err
 			}
 			voterIds = append(voterIds, voterID)
 		}
 		if err := voterRows.Close(); err != nil {
-			fmt.Printf("failed to close voterRows: %v\n", err)
+			logger.Log.WithError(err).Error("failed to close voterRows")
 		}
 
 		res.OptionID = optionID

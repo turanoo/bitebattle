@@ -2,9 +2,9 @@ package head2head
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/turanoo/bitebattle/pkg/logger"
 )
 
 type Matcher struct {
@@ -28,7 +28,7 @@ func (m *Matcher) FindMutualLikes(matchID uuid.UUID) ([]Swipe, error) {
 	}
 	defer func() {
 		if err := rows.Close(); err != nil {
-			fmt.Printf("failed to close rows: %v\n", err)
+			logger.Log.WithError(err).Error("failed to close rows")
 		}
 	}()
 

@@ -19,6 +19,7 @@ func NewHandler(service *Service) *Handler {
 }
 
 func (h *Handler) CreateMatch(c *gin.Context) {
+	log := logger.FromContext(c)
 	var req CreateMatchRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, utils.FormatValidationError(err))
@@ -27,30 +28,31 @@ func (h *Handler) CreateMatch(c *gin.Context) {
 
 	userID, err := auth.UserIDFromContext(c)
 	if err != nil {
-		logger.Warnf("Invalid user id in CreateMatch token: %v", err)
+		log.WithError(err).Warn("Invalid user id in CreateMatch token")
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
 	}
 
 	inviteeID, err := uuid.Parse(req.InviteeID)
 	if err != nil {
-		logger.Warnf("Invalid invitee ID in CreateMatch: %v", err)
+		log.WithError(err).Warn("Invalid invitee ID in CreateMatch")
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid invitee ID")
 		return
 	}
 
 	match, err := h.Service.CreateMatch(userID, inviteeID, req.Categories)
 	if err != nil {
-		logger.Errorf("Could not create match: %v", err)
+		log.WithError(err).Error("Could not create match")
 		utils.ErrorResponse(c, http.StatusInternalServerError, "could not create match")
 		return
 	}
 
-	logger.Infof("Head2Head match created: %s by %s", match.ID, userID)
+	log.Infof("Head2Head match created: %s by %s", match.ID, userID)
 	c.JSON(http.StatusCreated, match)
 }
 
 func (h *Handler) AcceptMatch(c *gin.Context) {
+	log := logger.FromContext(c)
 	matchID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid match ID")
@@ -59,7 +61,7 @@ func (h *Handler) AcceptMatch(c *gin.Context) {
 
 	userID, err := auth.UserIDFromContext(c)
 	if err != nil {
-		logger.Warnf("Invalid user id in AcceptMatch: %v", err)
+		log.WithError(err).Warn("Invalid user id in AcceptMatch")
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
 	}
@@ -73,6 +75,7 @@ func (h *Handler) AcceptMatch(c *gin.Context) {
 }
 
 func (h *Handler) SubmitSwipe(c *gin.Context) {
+	log := logger.FromContext(c)
 	var req SubmitSwipeRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, utils.FormatValidationError(err))
@@ -88,7 +91,7 @@ func (h *Handler) SubmitSwipe(c *gin.Context) {
 
 	userID, err := auth.UserIDFromContext(c)
 	if err != nil {
-		logger.Warnf("Invalid user id in SubmitSwipe: %v", err)
+		log.WithError(err).Warn("Invalid user id in SubmitSwipe")
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
 	}
@@ -103,14 +106,17 @@ func (h *Handler) SubmitSwipe(c *gin.Context) {
 }
 
 func (h *Handler) GetMatchResults(c *gin.Context) {
+	log := logger.FromContext(c)
 	matchID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
+		log.WithError(err).Warn("Invalid match ID in GetMatchResults")
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid match ID")
 		return
 	}
 
 	matches, err := h.Service.GetMutualLikes(matchID)
 	if err != nil {
+		log.WithError(err).Error("Failed to fetch match results")
 		utils.ErrorResponse(c, http.StatusInternalServerError, "failed to fetch match results")
 		return
 	}

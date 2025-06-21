@@ -19,6 +19,7 @@ func NewHandler(service *Service) *Handler {
 }
 
 func (h *Handler) CreateUser(c *gin.Context) {
+	log := logger.FromContext(c)
 	var u User
 	if err := c.ShouldBindJSON(&u); err != nil {
 		utils.ErrorResponse(c, http.StatusBadRequest, utils.FormatValidationError(err))
@@ -31,7 +32,7 @@ func (h *Handler) CreateUser(c *gin.Context) {
 		if errors.Is(err, ErrUserExists) {
 			utils.ErrorResponse(c, http.StatusConflict, "User with this email already exists.")
 		} else {
-			logger.Errorf("Failed to create user: %v", err)
+			log.WithError(err).Error("Failed to create user")
 			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to create user.")
 		}
 		return
@@ -41,6 +42,7 @@ func (h *Handler) CreateUser(c *gin.Context) {
 }
 
 func (h *Handler) GetUser(c *gin.Context) {
+	log := logger.FromContext(c)
 	id := c.Param("id")
 	ctx := c.Request.Context()
 	user, err := h.Service.GetUserByID(ctx, id)
@@ -48,7 +50,7 @@ func (h *Handler) GetUser(c *gin.Context) {
 		if errors.Is(err, sql.ErrNoRows) {
 			utils.ErrorResponse(c, http.StatusNotFound, "User not found.")
 		} else {
-			logger.Errorf("Failed to get user %s: %v", id, err)
+			log.WithError(err).Errorf("Failed to get user %s", id)
 			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to retrieve user.")
 		}
 		return

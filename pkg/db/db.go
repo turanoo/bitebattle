@@ -3,10 +3,11 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"log"
 
 	_ "github.com/lib/pq"
+	"github.com/sirupsen/logrus"
 	"github.com/turanoo/bitebattle/pkg/config"
+	"github.com/turanoo/bitebattle/pkg/logger"
 )
 
 var db *sql.DB
@@ -19,6 +20,14 @@ func Init(cfg *config.Config) error {
 	host := cfg.DB.Host
 	port := cfg.DB.Port
 
+	log := logger.Log.WithFields(logrus.Fields{
+		"db_user":       user,
+		"db_name":       dbName,
+		"instance_conn": instanceConnName,
+		"db_host":       host,
+		"db_port":       port,
+	})
+
 	var connStr string
 
 	if instanceConnName != "" {
@@ -26,7 +35,7 @@ func Init(cfg *config.Config) error {
 			"user=%s password=%s dbname=%s host=/cloudsql/%s sslmode=disable",
 			user, password, dbName, instanceConnName,
 		)
-		log.Print("[DB DEBUG] Using Cloud SQL Unix socket.")
+		log.Info("Using Cloud SQL Unix socket to connect to database.")
 	} else {
 		if host == "" {
 			host = "localhost"
@@ -38,22 +47,22 @@ func Init(cfg *config.Config) error {
 			"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 			host, port, user, password, dbName,
 		)
-		log.Print("[DB DEBUG] Using TCP")
+		log.Info("Using TCP connection to connect to database.")
 	}
 
 	var err error
 	db, err = sql.Open("postgres", connStr)
 	if err != nil {
-		log.Printf("[DB ERROR] sql.Open failed: %v", err)
+		log.WithError(err).Error("sql.Open failed")
 		return err
 	}
 
 	if err = db.Ping(); err != nil {
-		log.Printf("[DB ERROR] db.Ping failed: %v", err)
+		log.WithError(err).Error("db.Ping failed")
 		return err
 	}
 
-	log.Println("Connected to PostgreSQL database.")
+	log.Info("Connected to PostgreSQL database.")
 	return nil
 }
 

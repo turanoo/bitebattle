@@ -58,7 +58,8 @@ func (v *VertexAIClient) SendCommand(ctx context.Context, command string) (*Pars
 		return nil, err
 	}
 	defer func() {
-		_ = resp.Body.Close()
+		cerr := resp.Body.Close()
+		_ = cerr
 	}()
 
 	if resp.StatusCode != http.StatusOK {
@@ -162,7 +163,10 @@ func getAccessToken(cfg *config.Config) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		cerr := resp.Body.Close()
+		_ = cerr
+	}()
 
 	var tokenResp struct {
 		AccessToken string `json:"access_token"`

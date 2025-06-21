@@ -6,10 +6,11 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/sirupsen/logrus"
 )
 
-func RunMigrations(dbURL string, migrationsPath string) error {
-	fmt.Println("Starting database migrations...")
+func RunMigrations(dbURL string, migrationsPath string, log *logrus.Entry) error {
+	log.Info("Starting database migrations...")
 	m, err := migrate.New(
 		fmt.Sprintf("file://%s", migrationsPath),
 		dbURL,
@@ -29,6 +30,6 @@ func RunMigrations(dbURL string, migrationsPath string) error {
 	if closeErr != nil {
 		return fmt.Errorf("failed to close migrate instance: %w", closeErr)
 	}
-	fmt.Println("Database migrations ran successfully.")
+	log.Info("Database migrations ran successfully.")
 	return nil
 }

@@ -19,16 +19,17 @@ func NewHandler(service *Service) *Handler {
 }
 
 func (h *Handler) GetProfile(c *gin.Context) {
+	log := logger.FromContext(c)
 	userID, err := auth.UserIDFromContext(c)
 	if err != nil {
-		logger.Warnf("Invalid user id in GetProfile token: %v", err)
+		log.WithError(err).Warn("Invalid user id in GetProfile token")
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
 	}
 
 	profile, err := h.Service.GetUserProfile(userID)
 	if err != nil {
-		logger.Errorf("Failed to get profile for user %s: %v", userID, err)
+		log.WithError(err).Errorf("Failed to get profile for user %s", userID)
 		utils.ErrorResponse(c, http.StatusInternalServerError, "failed to get profile")
 		return
 	}
@@ -37,9 +38,10 @@ func (h *Handler) GetProfile(c *gin.Context) {
 }
 
 func (h *Handler) UpdateProfile(c *gin.Context) {
+	log := logger.FromContext(c)
 	userID, err := auth.UserIDFromContext(c)
 	if err != nil {
-		logger.Warnf("Invalid user id in UpdateProfile token: %v", err)
+		log.WithError(err).Warn("Invalid user id in UpdateProfile token")
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid user id")
 		return
 	}
@@ -56,7 +58,7 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 		if errors.Is(err, ErrEmailExists) {
 			utils.ErrorResponse(c, http.StatusConflict, "User with this email already exists.")
 		} else {
-			logger.Errorf("Failed to update profile for user %s: %v", userID, err)
+			log.WithError(err).Errorf("Failed to update profile for user %s", userID)
 			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to update profile.")
 		}
 		return

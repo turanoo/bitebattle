@@ -12,6 +12,13 @@ import (
 )
 
 type Config struct {
+	Gin struct {
+		Mode string `yaml:"mode"`
+		Log  struct {
+			Level  string `yaml:"level"`
+			Format string `yaml:"format"`
+		} `yaml:"log"`
+	} `yaml:"gin"`
 	Application struct {
 		Name        string `yaml:"name"`
 		Version     string `yaml:"version"`
@@ -93,6 +100,20 @@ func resolveGCPSecrets(ctx context.Context, cfg *Config) error {
 	}
 
 	var errList []error
+
+	cfg.Gin.Mode, err = resolve(cfg.Gin.Mode)
+	if err != nil {
+		errList = append(errList, fmt.Errorf("Gin.Mode: %w", err))
+	}
+	cfg.Gin.Log.Level, err = resolve(cfg.Gin.Log.Level)
+	if err != nil {
+		errList = append(errList, fmt.Errorf("Gin.Log.Level: %w", err))
+	}
+	cfg.Gin.Log.Format, err = resolve(cfg.Gin.Log.Format)
+	if err != nil {
+		errList = append(errList, fmt.Errorf("Gin.Log.Format: %w", err))
+	}
+
 	// Application
 	cfg.Application.JWTSecret, err = resolve(cfg.Application.JWTSecret)
 	if err != nil {

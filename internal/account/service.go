@@ -13,6 +13,7 @@ import (
 	"github.com/lib/pq"
 	"github.com/turanoo/bitebattle/pkg/config"
 	"github.com/turanoo/bitebattle/pkg/db"
+	"github.com/turanoo/bitebattle/pkg/logger"
 )
 
 var (
@@ -101,7 +102,7 @@ func generateSignedUploadURL(ctx context.Context, bucket, object, contentType st
 	defer func() {
 		cerr := client.Close()
 		if cerr != nil {
-			fmt.Printf("Failed to close storage client: %v\n", cerr)
+			logger.Log.WithError(cerr).Error("Failed to close storage client")
 		}
 	}()
 
@@ -121,7 +122,7 @@ func generateSignedAccessURL(ctx context.Context, bucket, object string) (string
 	defer func() {
 		cerr := client.Close()
 		if cerr != nil {
-			fmt.Printf("Failed to close storage client: %v\n", cerr)
+			logger.Log.WithError(cerr).Error("Failed to close storage client")
 		}
 	}()
 

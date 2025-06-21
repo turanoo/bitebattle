@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+
+	"github.com/turanoo/bitebattle/pkg/logger"
 )
 
 func (s *Service) fetchFromGooglePlaces(query string, location string, radius string) ([]Place, error) {
@@ -23,7 +25,7 @@ func (s *Service) fetchFromGooglePlaces(query string, location string, radius st
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			fmt.Printf("failed to close response body: %v\n", err)
+			logger.Log.WithError(err).Error("failed to close response body")
 		}
 	}()
 

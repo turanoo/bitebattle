@@ -17,9 +17,10 @@ func NewHandler(service *Service) *Handler {
 }
 
 func (h *Handler) SearchRestaurants(c *gin.Context) {
+	log := logger.FromContext(c)
 	query := c.Query("q")
 	if query == "" {
-		logger.Warn("query parameter 'q' is required in SearchRestaurants")
+		log.Warn("query parameter 'q' is required in SearchRestaurants")
 		utils.ErrorResponse(c, http.StatusBadRequest, "query parameter 'q' is required")
 		return
 	}
@@ -28,11 +29,11 @@ func (h *Handler) SearchRestaurants(c *gin.Context) {
 
 	places, err := h.Service.SearchRestaurants(query, location, "10000")
 	if err != nil {
-		logger.Errorf("Failed to fetch restaurants: %v", err)
+		log.WithError(err).Error("Failed to fetch restaurants")
 		utils.ErrorResponse(c, http.StatusInternalServerError, "failed to fetch restaurants")
 		return
 	}
 
-	logger.Infof("Restaurants search: query=%s, location=%s, found=%d", query, location, len(places))
+	log.Infof("Restaurants search: query=%s, location=%s, found=%d", query, location, len(places))
 	c.JSON(http.StatusOK, places)
 }
