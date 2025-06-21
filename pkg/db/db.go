@@ -19,8 +19,6 @@ func Init(cfg *config.Config) error {
 	host := cfg.DB.Host
 	port := cfg.DB.Port
 
-	log.Printf("[DB DEBUG] DB_USER=%s, DB_PASS=%s, DB_NAME=%s, INSTANCE_CONNECTION_NAME=%s, DB_HOST=%s, DB_PORT=%s", user, password, dbName, instanceConnName, host, port)
-
 	var connStr string
 
 	if instanceConnName != "" {
@@ -28,7 +26,7 @@ func Init(cfg *config.Config) error {
 			"user=%s password=%s dbname=%s host=/cloudsql/%s sslmode=disable",
 			user, password, dbName, instanceConnName,
 		)
-		log.Printf("[DB DEBUG] Using Cloud SQL Unix socket. ConnStr: %s", connStr)
+		log.Print("[DB DEBUG] Using Cloud SQL Unix socket.")
 	} else {
 		if host == "" {
 			host = "localhost"
@@ -40,7 +38,7 @@ func Init(cfg *config.Config) error {
 			"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 			host, port, user, password, dbName,
 		)
-		log.Printf("[DB DEBUG] Using TCP. ConnStr: %s", connStr)
+		log.Print("[DB DEBUG] Using TCP")
 	}
 
 	var err error
