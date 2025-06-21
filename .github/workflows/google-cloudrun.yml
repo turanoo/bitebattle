@@ -59,4 +59,4 @@ jobs:
             --set-env-vars=APP_ENV=prod \
             --platform managed \
             --region $REGION \
-            --allow-unauthenticated
+            --service-account=cloud-run-sa@bitebattle.iam.gserviceaccount.com
