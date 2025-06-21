@@ -21,9 +21,14 @@ type VertexAIClient struct {
 func NewVertexAIClient(cfg *config.Config) *VertexAIClient {
 	url := fmt.Sprintf("https://%s-aiplatform.googleapis.com/v1beta1/projects/%s/locations/%s/publishers/google/models/%s:generateContent",
 		cfg.Vertex.Location, cfg.Vertex.ProjectID, cfg.Vertex.Location, cfg.Vertex.Model)
+	token, err := getAccessToken(cfg)
+	if err != nil {
+		panic(fmt.Sprintf("failed to get access token for Vertex AI: %v", err))
+	}
+
 	return &VertexAIClient{
 		Url:       url,
-		AuthToken: cfg.Vertex.AuthToken,
+		AuthToken: token,
 	}
 }
 
@@ -44,6 +49,7 @@ func (v *VertexAIClient) SendCommand(ctx context.Context, command string) (*Pars
 	if err != nil {
 		return nil, err
 	}
+
 	req.Header.Set("Authorization", "Bearer "+v.AuthToken)
 	req.Header.Set("Content-Type", "application/json")
 
@@ -139,4 +145,34 @@ Output: {"food": "vegan food", "location": "40.7128,-74.0060", "radius": "10000"
 
 Command: ` + command + `
 Output:`
+}
+
+func getAccessToken(cfg *config.Config) (string, error) {
+	if token := cfg.Vertex.AuthToken; token != "" {
+		return token, nil
+	}
+
+	req, err := http.NewRequest("GET", "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token", nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Add("Metadata-Flavor", "Google")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	var tokenResp struct {
+		AccessToken string `json:"access_token"`
+		ExpiresIn   int    `json:"expires_in"`
+		TokenType   string `json:"token_type"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
+		return "", err
+	}
+
+	return tokenResp.AccessToken, nil
 }
