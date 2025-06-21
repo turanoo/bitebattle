@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"os"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -61,8 +60,8 @@ func main() {
 
 	router := gin.New()
 	router.Use(logger.Middleware())
-	router.Use(RequestLogger())
-	router.Use(ErrorRecovery())
+	router.Use(logger.RequestLogger())
+	router.Use(logger.ErrorRecovery())
 
 	api.SetupRoutes(router, database, cfg)
 
@@ -75,31 +74,4 @@ func main() {
 		logger.Errorf("Server failed: %v", err)
 		os.Exit(1)
 	}
-}
-
-func RequestLogger() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		start := time.Now()
-		path := c.Request.URL.Path
-		method := c.Request.Method
-		clientIP := c.ClientIP()
-
-		c.Next()
-
-		status := c.Writer.Status()
-		duration := time.Since(start)
-		errMsg := c.Errors.ByType(gin.ErrorTypePrivate).String()
-		if errMsg != "" {
-			logger.Errorf("%s %s %d %s %s | ERR: %s", method, path, status, duration, clientIP, errMsg)
-		} else {
-			logger.Infof("%s %s %d %s %s", method, path, status, duration, clientIP)
-		}
-	}
-}
-
-func ErrorRecovery() gin.HandlerFunc {
-	return gin.CustomRecoveryWithWriter(os.Stderr, func(c *gin.Context, recovered interface{}) {
-		logger.Errorf("PANIC: %v | Path: %s | Method: %s | IP: %s", recovered, c.Request.URL.Path, c.Request.Method, c.ClientIP())
-		c.AbortWithStatusJSON(500, gin.H{"error": "internal server error"})
-	})
 }

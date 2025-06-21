@@ -3,7 +3,9 @@ package logger
 import (
 	"os"
 	"strings"
+	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
 
@@ -94,4 +96,85 @@ func WithFields(fields logrus.Fields) *logrus.Entry {
 		}
 	}
 	return Log.WithFields(safeFields)
+}
+
+func RequestLogger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+		path := c.Request.URL.Path
+		method := c.Request.Method
+		clientIP := c.ClientIP()
+
+		c.Next()
+
+		status := c.Writer.Status()
+		duration := time.Since(start)
+		errMsg := c.Errors.ByType(gin.ErrorTypePrivate).String()
+
+		requestID := ""
+		if l, exists := c.Get(LoggerKey); exists {
+			if entry, ok := l.(*logrus.Entry); ok {
+				if rid, ok := entry.Data["requestId"].(string); ok {
+					requestID = rid
+				}
+			}
+		}
+		if requestID == "" {
+			requestID = c.GetHeader("X-Request-Id")
+		}
+		if requestID == "" {
+			requestID = "unknown"
+		}
+
+		logFields := logrus.Fields{
+			"method":    method,
+			"path":      path,
+			"status":    status,
+			"duration":  duration.String(),
+			"clientIP":  clientIP,
+			"requestId": requestID,
+		}
+		if errMsg != "" {
+			logFields["error"] = errMsg
+			Log.WithFields(logFields).Error("Request completed with error")
+		} else {
+			Log.WithFields(logFields).Info("Request completed")
+		}
+	}
+}
+
+func ErrorRecovery() gin.HandlerFunc {
+	return gin.CustomRecoveryWithWriter(os.Stderr, func(c *gin.Context, recovered interface{}) {
+		requestID := ""
+		if l, exists := c.Get(LoggerKey); exists {
+			if entry, ok := l.(*logrus.Entry); ok {
+				if rid, ok := entry.Data["requestId"].(string); ok {
+					requestID = rid
+				}
+			}
+		}
+		if requestID == "" {
+			requestID = c.GetHeader("X-Request-Id")
+		}
+		if requestID == "" {
+			requestID = "unknown"
+		}
+
+		logFields := logrus.Fields{
+			"method":    c.Request.Method,
+			"path":      c.Request.URL.Path,
+			"clientIP":  c.ClientIP(),
+			"error":     recovered,
+			"requestId": requestID,
+		}
+		Log.WithFields(logFields).Error("PANIC recovered")
+		c.AbortWithStatusJSON(500, gin.H{
+			"method":    c.Request.Method,
+			"path":      c.Request.URL.Path,
+			"clientIP":  c.ClientIP(),
+			"error":     "internal server error",
+			"details":   recovered,
+			"requestId": requestID,
+		})
+	})
 }
