@@ -10,31 +10,20 @@ import (
 	"github.com/turanoo/bitebattle/internal/head2head"
 	"github.com/turanoo/bitebattle/internal/poll"
 	"github.com/turanoo/bitebattle/internal/restaurant"
-	"github.com/turanoo/bitebattle/internal/user"
 	"github.com/turanoo/bitebattle/pkg/config"
 )
 
 func SetupRoutes(router *gin.Engine, db *sql.DB, cfg *config.Config) {
 	api := router.Group("/v1")
 
-	userService := user.NewService(db)
-	userHandler := user.NewHandler(userService)
-	authHandler := auth.NewHandler(userService)
-
 	// Public routes
 	api.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
-	api.POST("/auth/register", authHandler.Register)
-	api.POST("/auth/login", authHandler.Login)
 
 	// Protected routes
 	protected := api.Group("")
 	protected.Use(auth.AuthMiddleware())
-
-	protected.GET("/users/:id", userHandler.GetUser)
-	protected.GET("/users", userHandler.GetUserByQuery)
-	protected.POST("/users", userHandler.CreateUser)
 
 	accountService := account.NewService(db, cfg)
 	accountHandler := account.NewHandler(accountService)
