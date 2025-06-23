@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/turanoo/bitebattle/internal/auth"
 	"github.com/turanoo/bitebattle/pkg/logger"
 	"github.com/turanoo/bitebattle/pkg/utils"
@@ -33,9 +32,9 @@ func (h *Handler) CreateMatch(c *gin.Context) {
 		return
 	}
 
-	inviteeID, err := uuid.Parse(req.InviteeID)
-	if err != nil {
-		log.WithError(err).Warn("Invalid invitee ID in CreateMatch")
+	inviteeID := req.InviteeID
+	if inviteeID == "" {
+		log.Warn("Empty invitee ID in CreateMatch")
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid invitee ID")
 		return
 	}
@@ -53,8 +52,8 @@ func (h *Handler) CreateMatch(c *gin.Context) {
 
 func (h *Handler) AcceptMatch(c *gin.Context) {
 	log := logger.FromContext(c)
-	matchID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
+	matchID := c.Param("id")
+	if matchID == "" {
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid match ID")
 		return
 	}
@@ -82,9 +81,8 @@ func (h *Handler) SubmitSwipe(c *gin.Context) {
 		return
 	}
 
-	matchIDStr := c.Param("id")
-	matchID, err := uuid.Parse(matchIDStr)
-	if err != nil {
+	matchID := c.Param("id")
+	if matchID == "" {
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid match ID")
 		return
 	}
@@ -107,9 +105,9 @@ func (h *Handler) SubmitSwipe(c *gin.Context) {
 
 func (h *Handler) GetMatchResults(c *gin.Context) {
 	log := logger.FromContext(c)
-	matchID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
-		log.WithError(err).Warn("Invalid match ID in GetMatchResults")
+	matchID := c.Param("id")
+	if matchID == "" {
+		log.Warn("Empty match ID in GetMatchResults")
 		utils.ErrorResponse(c, http.StatusBadRequest, "invalid match ID")
 		return
 	}

@@ -1,7 +1,6 @@
 package account
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -55,12 +54,8 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 	ctx := c.Request.Context()
 	err = h.Service.UpdateProfile(ctx, userID, req.Name, req.Email)
 	if err != nil {
-		if errors.Is(err, ErrEmailExists) {
-			utils.ErrorResponse(c, http.StatusConflict, "User with this email already exists.")
-		} else {
-			log.WithError(err).Errorf("Failed to update profile for user %s", userID)
-			utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to update profile.")
-		}
+		log.WithError(err).Errorf("Failed to update profile for user %s", userID)
+		utils.ErrorResponse(c, http.StatusInternalServerError, "Failed to update profile.")
 		return
 	}
 

@@ -2,9 +2,9 @@ package head2head
 
 import (
 	"database/sql"
+	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/turanoo/bitebattle/pkg/config"
 	"github.com/turanoo/bitebattle/pkg/db"
@@ -13,15 +13,14 @@ import (
 type Service struct {
 	DB      *sql.DB
 	Matcher *Matcher
-	// Add config if needed in future
 }
 
 func NewService(db *sql.DB, cfg *config.Config) *Service {
 	return &Service{DB: db, Matcher: NewMatcher(db)}
 }
 
-func (s *Service) CreateMatch(inviterID, inviteeID uuid.UUID, categories []string) (*Match, error) {
-	id := uuid.New()
+func (s *Service) CreateMatch(inviterID, inviteeID string, categories []string) (*Match, error) {
+	id := generateRandomID()
 	now := time.Now()
 
 	_, err := s.DB.Exec(`
@@ -44,17 +43,17 @@ func (s *Service) CreateMatch(inviterID, inviteeID uuid.UUID, categories []strin
 	}, nil
 }
 
-func (s *Service) AcceptMatch(matchID, userID uuid.UUID) error {
+func (s *Service) AcceptMatch(matchID, userID string) error {
 	row := s.DB.QueryRow(`
 		SELECT invitee_id FROM head2head_matches WHERE id = $1 AND status = 'pending'
 	`, matchID)
 
-	var inviteeID uuid.UUID
+	var inviteeID string
 	err := db.ScanOne(row, &inviteeID)
 	if err != nil {
 		return err
 	}
-	if inviteeID == uuid.Nil || inviteeID != userID {
+	if inviteeID == "" || inviteeID != userID {
 		return sql.ErrNoRows
 	}
 
@@ -64,8 +63,8 @@ func (s *Service) AcceptMatch(matchID, userID uuid.UUID) error {
 	return err
 }
 
-func (s *Service) SubmitSwipe(matchID, userID uuid.UUID, restaurantID, restaurantName string, liked bool) (*Swipe, error) {
-	id := uuid.New()
+func (s *Service) SubmitSwipe(matchID, userID, restaurantID, restaurantName string, liked bool) (*Swipe, error) {
+	id := generateRandomID()
 	now := time.Now()
 
 	_, err := s.DB.Exec(`
@@ -88,6 +87,10 @@ func (s *Service) SubmitSwipe(matchID, userID uuid.UUID, restaurantID, restauran
 	}, nil
 }
 
-func (s *Service) GetMutualLikes(matchID uuid.UUID) ([]Swipe, error) {
+func (s *Service) GetMutualLikes(matchID string) ([]Swipe, error) {
 	return s.Matcher.FindMutualLikes(matchID)
+}
+
+func generateRandomID() string {
+	return strings.ReplaceAll(time.Now().Format("20060102150405.000000000"), ".", "")
 }

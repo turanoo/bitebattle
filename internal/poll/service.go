@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/turanoo/bitebattle/pkg/config"
 	"github.com/turanoo/bitebattle/pkg/db"
 	"github.com/turanoo/bitebattle/pkg/logger"
@@ -20,15 +19,14 @@ var ErrOptionNotInPoll = errors.New("option does not exist for this poll")
 
 type Service struct {
 	DB *sql.DB
-	// Add config if needed in future
 }
 
 func NewService(db *sql.DB, cfg *config.Config) *Service {
 	return &Service{DB: db}
 }
 
-func (s *Service) CreatePoll(name string, createdBy uuid.UUID) (*Poll, error) {
-	id := uuid.New()
+func (s *Service) CreatePoll(name string, createdBy string) (*Poll, error) {
+	id := utils.GenerateRandomString(32)
 	now := time.Now()
 	inviteCode := utils.GenerateRandomString(8)
 
@@ -63,7 +61,7 @@ func (s *Service) CreatePoll(name string, createdBy uuid.UUID) (*Poll, error) {
 	return &poll, nil
 }
 
-func (s *Service) GetPolls(userID uuid.UUID) ([]Poll, error) {
+func (s *Service) GetPolls(userID string) ([]Poll, error) {
 	rows, err := s.DB.Query(`
 		SELECT p.id, p.name, p.invite_code, p.created_by, p.created_at, p.updated_at,
 			CASE 
@@ -104,9 +102,9 @@ func (s *Service) GetPolls(userID uuid.UUID) ([]Poll, error) {
 			return nil, err
 		}
 
-		members := []uuid.UUID{}
+		members := []string{}
 		for memberRows.Next() {
-			var memberID uuid.UUID
+			var memberID string
 			if err := memberRows.Scan(&memberID); err != nil {
 				if closeErr := memberRows.Close(); closeErr != nil {
 					logger.Log.WithError(closeErr).Error("failed to close memberRows")
@@ -127,7 +125,7 @@ func (s *Service) GetPolls(userID uuid.UUID) ([]Poll, error) {
 	return polls, nil
 }
 
-func (s *Service) GetPoll(pollID, userId uuid.UUID) (*Poll, error) {
+func (s *Service) GetPoll(pollID, userId string) (*Poll, error) {
 	row := s.DB.QueryRow(`
 		SELECT id, name, invite_code, created_by, created_at, updated_at,
 			CASE 
@@ -146,7 +144,7 @@ func (s *Service) GetPoll(pollID, userId uuid.UUID) (*Poll, error) {
 	if err != nil {
 		return nil, err
 	}
-	if poll.ID == uuid.Nil || poll.Role == "" {
+	if poll.ID == "" || poll.Role == "" {
 		return nil, sql.ErrNoRows
 	}
 
@@ -157,9 +155,9 @@ func (s *Service) GetPoll(pollID, userId uuid.UUID) (*Poll, error) {
 		return nil, err
 	}
 
-	members := []uuid.UUID{}
+	members := []string{}
 	for memberRows.Next() {
-		var memberID uuid.UUID
+		var memberID string
 		if err := memberRows.Scan(&memberID); err != nil {
 			return nil, err
 		}
@@ -173,7 +171,7 @@ func (s *Service) GetPoll(pollID, userId uuid.UUID) (*Poll, error) {
 	return &poll, nil
 }
 
-func (s *Service) DeletePoll(pollID uuid.UUID) error {
+func (s *Service) DeletePoll(pollID string) error {
 	tx, err := s.DB.Begin()
 	if err != nil {
 		return err
@@ -232,7 +230,7 @@ func (s *Service) DeletePoll(pollID uuid.UUID) error {
 	return tx.Commit()
 }
 
-func (s *Service) UpdatePoll(pollID uuid.UUID, name string) (*Poll, error) {
+func (s *Service) UpdatePoll(pollID string, name string) (*Poll, error) {
 	setClauses := []string{}
 	args := []interface{}{}
 	argIdx := 1
@@ -255,10 +253,10 @@ func (s *Service) UpdatePoll(pollID uuid.UUID, name string) (*Poll, error) {
 		return nil, err
 	}
 
-	return s.GetPoll(pollID, uuid.Nil) // Return updated poll without user context
+	return s.GetPoll(pollID, "") // Return updated poll without user context
 }
 
-func (s *Service) JoinPoll(inviteCode string, userId uuid.UUID) (*Poll, error) {
+func (s *Service) JoinPoll(inviteCode string, userId string) (*Poll, error) {
 	row := s.DB.QueryRow(`
 		SELECT id, name, created_by, invite_code, created_at, updated_at
 		FROM polls WHERE invite_code = $1
@@ -301,8 +299,8 @@ func (s *Service) JoinPoll(inviteCode string, userId uuid.UUID) (*Poll, error) {
 	return &poll, nil
 }
 
-func (s *Service) AddOption(pollID uuid.UUID, restaurantID, name, imageURL, menuURL string) (*PollOption, error) {
-	id := uuid.New()
+func (s *Service) AddOption(pollID string, restaurantID, name, imageURL, menuURL string) (*PollOption, error) {
+	id := utils.GenerateRandomString(32)
 
 	_, err := s.DB.Exec(`
         INSERT INTO poll_options (id, poll_id, restaurant_id, name, image_url, menu_url)
@@ -323,8 +321,8 @@ func (s *Service) AddOption(pollID uuid.UUID, restaurantID, name, imageURL, menu
 	}, nil
 }
 
-func (s *Service) CastVote(pollID, optionID, userID uuid.UUID) (*PollVote, error) {
-	id := uuid.New()
+func (s *Service) CastVote(pollID string, optionID string, userID string) (*PollVote, error) {
+	id := utils.GenerateRandomString(32)
 
 	// Check if option exists for this poll
 	var exists bool
@@ -353,7 +351,7 @@ func (s *Service) CastVote(pollID, optionID, userID uuid.UUID) (*PollVote, error
 	}, nil
 }
 
-func (s *Service) RemoveVote(pollID, optionID, userID uuid.UUID) error {
+func (s *Service) RemoveVote(pollID string, optionID string, userID string) error {
 	// Check if option exists for this poll
 	var exists bool
 	err := s.DB.QueryRow(`SELECT EXISTS (SELECT 1 FROM poll_options WHERE id = $1 AND poll_id = $2)`, optionID, pollID).Scan(&exists)
@@ -383,7 +381,7 @@ func (s *Service) RemoveVote(pollID, optionID, userID uuid.UUID) error {
 	return nil
 }
 
-func (s *Service) GetResults(pollID uuid.UUID) ([]PollResult, error) {
+func (s *Service) GetResults(pollID string) ([]PollResult, error) {
 	rows, err := s.DB.Query(`
 		SELECT o.id, o.name, COUNT(v.id) as votes
 		FROM poll_options o
@@ -404,11 +402,11 @@ func (s *Service) GetResults(pollID uuid.UUID) ([]PollResult, error) {
 	results := []PollResult{}
 	for rows.Next() {
 		var res PollResult
-		var optionID uuid.UUID
+		var optionID string
 		var optionName string
 		var voteCount int
 
-		voterIds := []uuid.UUID{}
+		voterIds := []string{}
 
 		if err := rows.Scan(&optionID, &optionName, &voteCount); err != nil {
 			return nil, err
@@ -421,7 +419,7 @@ func (s *Service) GetResults(pollID uuid.UUID) ([]PollResult, error) {
 			return nil, err
 		}
 		for voterRows.Next() {
-			var voterID uuid.UUID
+			var voterID string
 			if err := voterRows.Scan(&voterID); err != nil {
 				if closeErr := voterRows.Close(); closeErr != nil {
 					logger.Log.WithError(closeErr).Error("failed to close voterRows")

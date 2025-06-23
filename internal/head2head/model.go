@@ -2,12 +2,10 @@ package head2head
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type CreateMatchRequest struct {
-	InviteeID  string   `json:"invitee_id" binding:"required,uuid"`
+	InviteeID  string   `json:"invitee_id" binding:"required"`
 	Categories []string `json:"categories" binding:"required,min=1,dive,required"`
 }
 
@@ -18,9 +16,9 @@ type SubmitSwipeRequest struct {
 }
 
 type Match struct {
-	ID         uuid.UUID `json:"id"`
-	InviterID  uuid.UUID `json:"inviter_id"`
-	InviteeID  uuid.UUID `json:"invitee_id"`
+	ID         string    `json:"id"`
+	InviterID  string    `json:"inviter_id"`
+	InviteeID  string    `json:"invitee_id"`
 	Status     string    `json:"status"` // pending, active, completed, cancelled
 	Categories []string  `json:"categories"`
 	CreatedAt  time.Time `json:"created_at"`
@@ -28,9 +26,9 @@ type Match struct {
 }
 
 type Swipe struct {
-	ID             uuid.UUID `json:"id"`
-	MatchID        uuid.UUID `json:"match_id"`
-	UserID         uuid.UUID `json:"user_id"`
+	ID             string    `json:"id"`
+	MatchID        string    `json:"match_id"`
+	UserID         string    `json:"user_id"`
 	RestaurantID   string    `json:"restaurant_id"`
 	RestaurantName string    `json:"restaurant_name"`
 	Liked          bool      `json:"liked"`

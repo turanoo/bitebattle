@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/turanoo/bitebattle/internal/auth"
 	"github.com/turanoo/bitebattle/pkg/logger"
 	"github.com/turanoo/bitebattle/pkg/utils"
@@ -58,7 +57,7 @@ func (h *Handler) GetPolls(c *gin.Context) {
 	polls, err := h.Service.GetPolls(userID)
 	if err != nil {
 		log.WithError(err).Errorf("Failed to fetch polls for user %s", userID)
-		utils.ErrorResponse(c, http.StatusInternalServerError, "failed to fetch polls")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch polls"})
 		return
 	}
 
@@ -99,11 +98,7 @@ func (h *Handler) JoinPoll(c *gin.Context) {
 
 func (h *Handler) GetPoll(c *gin.Context) {
 	log := logger.FromContext(c)
-	pollID, err := uuid.Parse(c.Param("pollId"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid poll ID"})
-		return
-	}
+	pollID := c.Param("pollId")
 
 	userID, err := auth.UserIDFromContext(c)
 	if err != nil {
@@ -127,11 +122,7 @@ func (h *Handler) GetPoll(c *gin.Context) {
 
 func (h *Handler) DeletePoll(c *gin.Context) {
 	log := logger.FromContext(c)
-	pollID, err := uuid.Parse(c.Param("pollId"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid poll ID"})
-		return
-	}
+	pollID := c.Param("pollId")
 
 	if err := h.Service.DeletePoll(pollID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -156,13 +147,7 @@ func (h *Handler) UpdatePoll(c *gin.Context) {
 		return
 	}
 
-	pollIDStr := c.Param("pollId")
-	pollID, err := uuid.Parse(pollIDStr)
-	if err != nil {
-		log.WithError(err).Warn("Invalid poll ID in UpdatePoll")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid poll ID"})
-		return
-	}
+	pollID := c.Param("pollId")
 
 	poll, err := h.Service.UpdatePoll(pollID, req.Name)
 	if err != nil {
@@ -182,13 +167,7 @@ func (h *Handler) AddOption(c *gin.Context) {
 		return
 	}
 
-	pollIDStr := c.Param("pollId")
-	pollID, err := uuid.Parse(pollIDStr)
-	if err != nil {
-		log.WithError(err).Warn("Invalid poll ID in AddOption")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid poll ID"})
-		return
-	}
+	pollID := c.Param("pollId")
 
 	var addedOptions []PollOption
 	for _, opt := range req {
@@ -212,12 +191,7 @@ func (h *Handler) CastVote(c *gin.Context) {
 		return
 	}
 
-	pollIDStr := c.Param("pollId")
-	pollID, err := uuid.Parse(pollIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid poll ID"})
-		return
-	}
+	pollID := c.Param("pollId")
 
 	userID, err := auth.UserIDFromContext(c)
 	if err != nil {
@@ -226,13 +200,7 @@ func (h *Handler) CastVote(c *gin.Context) {
 		return
 	}
 
-	optionID, err := uuid.Parse(req.OptionID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid option ID"})
-		return
-	}
-
-	vote, err := h.Service.CastVote(pollID, optionID, userID)
+	vote, err := h.Service.CastVote(pollID, req.OptionID, userID)
 	if err != nil {
 		if errors.Is(err, ErrOptionNotInPoll) {
 			utils.ErrorResponse(c, http.StatusBadRequest, "Option does not exist for this poll.")
@@ -253,12 +221,7 @@ func (h *Handler) UncastVote(c *gin.Context) {
 		return
 	}
 
-	pollIDStr := c.Param("pollId")
-	pollID, err := uuid.Parse(pollIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid poll ID"})
-		return
-	}
+	pollID := c.Param("pollId")
 
 	userID, err := auth.UserIDFromContext(c)
 	if err != nil {
@@ -267,13 +230,7 @@ func (h *Handler) UncastVote(c *gin.Context) {
 		return
 	}
 
-	optionID, err := uuid.Parse(req.OptionID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid option ID"})
-		return
-	}
-
-	if err := h.Service.RemoveVote(pollID, optionID, userID); err != nil {
+	if err := h.Service.RemoveVote(pollID, req.OptionID, userID); err != nil {
 		if errors.Is(err, ErrOptionNotInPoll) {
 			utils.ErrorResponse(c, http.StatusBadRequest, "Option does not exist for this poll.")
 			return
@@ -291,12 +248,7 @@ func (h *Handler) UncastVote(c *gin.Context) {
 
 func (h *Handler) GetResults(c *gin.Context) {
 	log := logger.FromContext(c)
-	pollID, err := uuid.Parse(c.Param("pollId"))
-	if err != nil {
-		log.WithError(err).Warn("Invalid poll ID in GetResults")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid poll ID"})
-		return
-	}
+	pollID := c.Param("pollId")
 
 	results, err := h.Service.GetResults(pollID)
 	if err != nil {

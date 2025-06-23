@@ -21,9 +21,11 @@ type Log struct {
 }
 
 type Auth0 struct {
-	Domain       string `yaml:"domain"`
-	ClientID     string `yaml:"client_id"`
-	ClientSecret string `yaml:"client_secret"`
+	Domain        string `yaml:"domain"`
+	ClientID      string `yaml:"client_id"`
+	ClientSecret  string `yaml:"client_secret"`
+	ManagementAPI string `yaml:"management_api"`
+	TokenURL      string `yaml:"management_token_url"`
 }
 
 type Application struct {

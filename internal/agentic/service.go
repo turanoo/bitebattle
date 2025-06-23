@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/turanoo/bitebattle/internal/poll"
 	"github.com/turanoo/bitebattle/internal/restaurant"
 )
@@ -23,7 +22,7 @@ func NewService(vertex *VertexAIClient, pollSvc poll.Service, restSvc restaurant
 	}
 }
 
-func (s *Service) OrchestrateCommand(ctx context.Context, userID uuid.UUID, command string) (interface{}, error) {
+func (s *Service) OrchestrateCommand(ctx context.Context, userID string, command string) (interface{}, error) {
 	// Step 1: Parse command for query/location
 	parsedPrompt, err := s.Vertex.SendCommand(ctx, command)
 	if err != nil {

@@ -4,13 +4,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/turanoo/bitebattle/pkg/utils"
 )
 
 const userIDContextKey = "userID"
 
-func AuthMiddleware() gin.HandlerFunc {
+// Auth0Middleware validates Auth0 JWT and extracts user info from claims
+func Auth0Middleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -33,19 +33,31 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		userUUID, err := uuid.Parse(claims.UserID)
-		if err != nil {
+		// Auth0 user ID is the 'sub' claim (string)
+		userID := claims.UserID
+		if userID == "" {
 			utils.ErrorResponse(c, http.StatusUnauthorized, "invalid user id in token")
 			c.Abort()
 			return
 		}
-		c.Set(userIDContextKey, userUUID)
+		c.Set(userIDContextKey, userID)
+
+		// Optionally set email and name if present in claims
+		// (Add these fields to Claims struct if needed)
 
 		c.Next()
 	}
 }
 
-func UserIDFromContext(c *gin.Context) (uuid.UUID, error) {
-	userID := c.MustGet(userIDContextKey).(uuid.UUID)
-	return userID, nil
+// UserIDFromContext returns the Auth0 user ID (string) from context
+func UserIDFromContext(c *gin.Context) (string, error) {
+	userID, ok := c.Get(userIDContextKey)
+	if !ok {
+		return "", http.ErrNoCookie
+	}
+	idStr, ok := userID.(string)
+	if !ok {
+		return "", http.ErrNoCookie
+	}
+	return idStr, nil
 }

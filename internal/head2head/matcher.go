@@ -3,7 +3,6 @@ package head2head
 import (
 	"database/sql"
 
-	"github.com/google/uuid"
 	"github.com/turanoo/bitebattle/pkg/logger"
 )
 
@@ -15,7 +14,7 @@ func NewMatcher(db *sql.DB) *Matcher {
 	return &Matcher{DB: db}
 }
 
-func (m *Matcher) FindMutualLikes(matchID uuid.UUID) ([]Swipe, error) {
+func (m *Matcher) FindMutualLikes(matchID string) ([]Swipe, error) {
 	rows, err := m.DB.Query(`
 		SELECT restaurant_id, restaurant_name
 		FROM head2head_swipes
@@ -38,10 +37,7 @@ func (m *Matcher) FindMutualLikes(matchID uuid.UUID) ([]Swipe, error) {
 		if err := rows.Scan(&sw.RestaurantID, &sw.RestaurantName); err != nil {
 			return nil, err
 		}
-		sw.MatchID = matchID
-		sw.Liked = true
 		matches = append(matches, sw)
 	}
-
 	return matches, nil
 }

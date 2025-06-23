@@ -23,7 +23,7 @@ func SetupRoutes(router *gin.Engine, db *sql.DB, cfg *config.Config) {
 
 	// Protected routes
 	protected := api.Group("")
-	protected.Use(auth.AuthMiddleware())
+	protected.Use(auth.Auth0Middleware())
 
 	accountService := account.NewService(db, cfg)
 	accountHandler := account.NewHandler(accountService)

@@ -14,6 +14,8 @@ auth0:
   domain: gcp-secret://projects/612596290944/secrets/AUTH0_DOMAIN/versions/latest
   client_id: gcp-secret://projects/612596290944/secrets/AUTH0_CLIENT_ID/versions/latest
   client_secret: gcp-secret://projects/612596290944/secrets/AUTH0_CLIENT_SECRET/versions/latest
+  management_api: gcp-secret://projects/612596290944/secrets/AUTH0_MANAGEMENT_API/versions/latest
+  management_token_url: gcp-secret://projects/612596290944/secrets/MANAGEMENT_TOKEN_URL/versions/latest
 
 db:
   host: gcp-secret://projects/612596290944/secrets/DB_HOST/versions/latest
