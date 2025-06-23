@@ -9,26 +9,25 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/turanoo/bitebattle/pkg/config"
 )
 
+var (
+	cachedToken     string
+	tokenExpiryTime int64
+)
+
 type VertexAIClient struct {
-	Url       string
-	AuthToken string
+	Url string
 }
 
 func NewVertexAIClient(cfg *config.Config) *VertexAIClient {
 	url := fmt.Sprintf("https://%s-aiplatform.googleapis.com/v1beta1/projects/%s/locations/%s/publishers/google/models/%s:generateContent",
 		cfg.Vertex.Location, cfg.Vertex.ProjectID, cfg.Vertex.Location, cfg.Vertex.Model)
-	token, err := getAccessToken(cfg)
-	if err != nil {
-		panic(fmt.Sprintf("failed to get access token for Vertex AI: %v", err))
-	}
-
 	return &VertexAIClient{
-		Url:       url,
-		AuthToken: token,
+		Url: url,
 	}
 }
 
@@ -50,7 +49,12 @@ func (v *VertexAIClient) SendCommand(ctx context.Context, command string) (*Pars
 		return nil, err
 	}
 
-	req.Header.Set("Authorization", "Bearer "+v.AuthToken)
+	token, err := getAccessToken()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get access token: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
@@ -148,9 +152,10 @@ Command: ` + command + `
 Output:`
 }
 
-func getAccessToken(cfg *config.Config) (string, error) {
-	if token := cfg.Vertex.AuthToken; token != "" {
-		return token, nil
+func getAccessToken() (string, error) {
+	// If we have a cached token and it's not expired, return it
+	if cachedToken != "" && tokenExpiryTime > time.Now().Unix()+60 {
+		return cachedToken, nil
 	}
 
 	req, err := http.NewRequest("GET", "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token", nil)
@@ -178,5 +183,8 @@ func getAccessToken(cfg *config.Config) (string, error) {
 		return "", err
 	}
 
-	return tokenResp.AccessToken, nil
+	cachedToken = tokenResp.AccessToken
+	tokenExpiryTime = time.Now().Unix() + int64(tokenResp.ExpiresIn)
+
+	return cachedToken, nil
 }

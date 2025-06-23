@@ -45,7 +45,6 @@ type Config struct {
 		ProjectID string `yaml:"project_id"`
 		Location  string `yaml:"location"`
 		Model     string `yaml:"model"`
-		AuthToken string `yaml:"auth_token"`
 	} `yaml:"vertex"`
 }
 
@@ -170,10 +169,6 @@ func resolveGCPSecrets(ctx context.Context, cfg *Config) error {
 	cfg.Vertex.Model, err = resolve(cfg.Vertex.Model)
 	if err != nil {
 		errList = append(errList, fmt.Errorf("Vertex.Model: %w", err))
-	}
-	cfg.Vertex.AuthToken, err = resolve(cfg.Vertex.AuthToken)
-	if err != nil {
-		errList = append(errList, fmt.Errorf("Vertex.AuthToken: %w", err))
 	}
 
 	if len(errList) > 0 {
