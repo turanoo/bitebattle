@@ -134,6 +134,12 @@ func RequestLogger() gin.HandlerFunc {
 			"clientIP":  clientIP,
 			"requestId": requestID,
 		}
+
+		if path == "/v1/health" && status == 200 {
+			// Skip logging successful health checks
+			return
+		}
+
 		if errMsg != "" {
 			logFields["error"] = errMsg
 			Log.WithFields(logFields).Error("Request completed with error")

@@ -10,6 +10,11 @@ application:
   environment: prod
   jwt_secret: gcp-secret://projects/612596290944/secrets/JWT_SECRET/versions/latest
 
+auth0:
+  domain: gcp-secret://projects/612596290944/secrets/AUTH0_DOMAIN/versions/latest
+  client_id: gcp-secret://projects/612596290944/secrets/AUTH0_CLIENT_ID/versions/latest
+  client_secret: gcp-secret://projects/612596290944/secrets/AUTH0_CLIENT_SECRET/versions/latest
+
 db:
   host: gcp-secret://projects/612596290944/secrets/DB_HOST/versions/latest
   port: gcp-secret://projects/612596290944/secrets/DB_PORT/versions/latest

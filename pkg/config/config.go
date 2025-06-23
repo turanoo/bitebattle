@@ -11,44 +11,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type Config struct {
-	Gin struct {
-		Mode string `yaml:"mode"`
-		Log  struct {
-			Level  string `yaml:"level"`
-			Format string `yaml:"format"`
-		} `yaml:"log"`
-	} `yaml:"gin"`
-	Application struct {
-		Name        string `yaml:"name"`
-		Version     string `yaml:"version"`
-		Environment string `yaml:"environment"`
-		JWTSecret   string `yaml:"jwt_secret"`
-	} `yaml:"application"`
-	DB struct {
-		Host         string `yaml:"host"`
-		Port         string `yaml:"port"`
-		User         string `yaml:"user"`
-		Pass         string `yaml:"pass"`
-		Name         string `yaml:"name"`
-		InstanceConn string `yaml:"instance_connection_name"` // For Cloud SQL
-	} `yaml:"db"`
-	GCS struct {
-		ProfileBucket string `yaml:"profile_bucket"`
-		ObjectURL     string `yaml:"object_url"`
-	} `yaml:"gcs"`
-	GooglePlaces struct {
-		APIKey      string `yaml:"api_key"`
-		APIEndpoint string `yaml:"api_endpoint"`
-	} `yaml:"google_places"`
-	Vertex struct {
-		ProjectID string `yaml:"project_id"`
-		Location  string `yaml:"location"`
-		Model     string `yaml:"model"`
-		AuthToken string `yaml:"auth_token"`
-	} `yaml:"vertex"`
-}
-
 func LoadConfig(ctx context.Context, configDir string) (*Config, error) {
 	appEnv := os.Getenv("APP_ENV")
 	if appEnv == "" {
